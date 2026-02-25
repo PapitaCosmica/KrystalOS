@@ -31,5 +31,38 @@ Infrastructure: Docker & Docker Compose.
 
 Integrations: EasyOCR / Tesseract + ReportLab (Digital Signatures).
 
-♿ Accesibilidad y Personalización
+// Accesibilidad y Personalización
 KrystalOS incluye un Centro de Accesibilidad configurable, permitiendo a cada usuario activar modos de alto contraste, lectura para ciegos, reducción de movimiento y tipografías para dislexia, garantizando que el sistema sea inclusivo para todos.
+
+// Widgets
+
+Los widgets en KrystalOS son unidades de software independientes y autónomas. Funcionan bajo un principio de desacoplamiento total: cada widget posee su propia lógica de negocio, esquema de datos y archivos de interfaz, lo que permite desarrollarlos, probarlos o eliminarlos sin afectar la integridad del núcleo del sistema o de otros módulos.
+
+Funcionamiento de los widgets
+El framework utiliza un motor de autodescubrimiento. Al iniciar el servidor, KrystalOS escanea el directorio de widgets y registra automáticamente las rutas de API y los modelos de base de datos encontrados. La comunicación entre ellos se realiza a través de un Bus de Eventos basado en WebSockets, permitiendo que un widget reaccione a cambios en otro sin estar vinculados directamente en el código.
+
+Organización de carpetas y archivos obligatorios
+Cada widget debe residir en su propia carpeta dentro del directorio raíz de widgets. La estructura interna obligatoria es la siguiente:
+
+config.json: Contiene los metadatos del widget. Define el nombre técnico, el icono para el menú, los permisos necesarios para ejecutarlo y las dimensiones iniciales (ancho y alto) que ocupará en el bento-grid.
+
+models.py: Define la estructura de la tabla en PostgreSQL utilizando SQLModel o SQLAlchemy. El framework detecta este archivo para ejecutar las migraciones automáticas.
+
+routes.py: Contiene los endpoints de FastAPI específicos del widget. No es necesario registrar estas rutas en un archivo central; el orquestador las monta bajo el prefijo del nombre del widget.
+
+ui.html: El fragmento de interfaz de usuario. Debe seguir las clases CSS de KrystalOS para mantener la estética de cristal y neumorfismo.
+
+script.js: Lógica del lado del cliente. Gestiona la interactividad y la escucha de eventos en tiempo real.
+
+Proceso de creación simplificado
+Para crear un widget sin manipular manualmente el framework, se utiliza el Krystal-CLI. El flujo estándar es:
+
+Ejecutar el comando de generación para crear la estructura de carpetas base.
+
+Definir los campos de datos en el archivo de modelos.
+
+Escribir la lógica de la API en el archivo de rutas.
+
+Diseñar la vista en el archivo HTML utilizando los componentes predefinidos del sistema.
+
+Una vez creada la carpeta con estos archivos, el sistema la integra automáticamente en el tablero principal la próxima vez que se inicie el servidor o se actualice el despliegue de Docker.
