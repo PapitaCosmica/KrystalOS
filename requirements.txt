@@ -1,0 +1,16 @@
+fastapi[standard]
+uvicorn
+sqlmodel
+psycopg2-binary
+alembic
+typer
+python-dotenv
+pytesseract
+pdf2image
+PyMuPDF
+sentence-transformers
+websockets
+python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
+cryptography

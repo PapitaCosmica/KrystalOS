@@ -1,0 +1,37 @@
+/* Pastel Blue Theme */
+:root {
+  --krystal-bg: #f0f8ff; /* AliceBlue */
+  --krystal-text: #1e3a5f; /* Deep blue text */
+  
+  --base-glass-bg: rgba(220, 240, 255, 0.5);
+  --base-glass-border: rgba(173, 216, 230, 0.6);
+  --base-glass-blur: blur(20px);
+  --base-shadow: 0 8px 32px 0 rgba(100, 150, 200, 0.1);
+  --focus-ring-color: #60a5fa;
+  
+  --wallpaper-bg: #f5fafe;
+  --wallpaper-img: 
+    radial-gradient(circle at 10% 20%, rgba(173, 216, 230, 0.4), transparent 60%),
+    radial-gradient(circle at 90% 80%, rgba(135, 206, 250, 0.3), transparent 60%);
+    
+  --bloop-bg: radial-gradient(circle at center, rgba(135, 206, 235, 0.4) 0%, rgba(135, 206, 235, 0) 60%);
+  --menu-hover: rgba(173, 216, 230, 0.25);
+}
+
+body.dark-mode {
+  /* Adapted Dark Blue */
+  --krystal-bg: #0b1528; /* Midnight blue */
+  --krystal-text: #bfdbfe; /* Light baby blue text */
+  
+  --base-glass-bg: rgba(15, 35, 70, 0.6);
+  --base-glass-border: rgba(96, 165, 250, 0.2);
+  --base-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  
+  --wallpaper-bg: #070e1c;
+  --wallpaper-img: 
+    radial-gradient(circle at 10% 20%, rgba(30, 64, 175, 0.3), transparent 60%),
+    radial-gradient(circle at 90% 80%, rgba(29, 78, 216, 0.2), transparent 60%);
+    
+  --bloop-bg: radial-gradient(circle at center, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0) 60%);
+  --menu-hover: rgba(96, 165, 250, 0.15);
+}

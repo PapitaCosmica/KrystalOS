@@ -1,0 +1,13 @@
+{
+    "id": "krystal-core-users",
+    "name": "Gestión de Usuarios",
+    "version": "1.0.0",
+    "author": "KrystalOS Core",
+    "description": "Widget oficial para visualizar y crear usuarios en el sistema.",
+    "api_prefix": "/api/widgets/users",
+    "permissions": ["admin"],
+    "default_size": {
+        "w": 6,
+        "h": 4
+    }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "demo",
+  "description": "Widget de demostración para KrystalOS",
+  "version": "1.0.0",
+  "api_prefix": "/api/widgets/demo",
+  "grid": {
+    "w": 3,
+    "h": 2
+  },
+  "icon": "box",
+  "permissions": [],
+  "context_menu": [
+    {"label": "Refrescar Estado", "action": "refreshWidget", "icon": "↻"},
+    {"label": "Ocultar Alerta", "action": "hideAlert", "icon": "👁️"}
+  ]
+}

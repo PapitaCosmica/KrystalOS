@@ -1,0 +1,33 @@
+/* Cyberpunk Theme (High Contrast Neon) */
+:root {
+  --krystal-bg: #050505;
+  --krystal-text: #00ffcc;
+  
+  --base-glass-bg: rgba(10, 10, 15, 0.7);
+  --base-glass-border: rgba(255, 0, 128, 0.5);
+  --base-glass-blur: blur(8px);
+  --base-shadow: 0 0 20px rgba(255, 0, 128, 0.2);
+  
+  --focus-ring-color: #00ffcc;
+  
+  --wallpaper-bg: #050505;
+  --wallpaper-img: 
+    radial-gradient(circle at 10% 90%, rgba(255, 0, 128, 0.2), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(0, 255, 204, 0.2), transparent 40%);
+    
+  --bloop-bg: radial-gradient(circle at center, rgba(255, 255, 0, 0.4) 0%, rgba(255, 255, 0, 0) 50%);
+  --menu-hover: rgba(255, 0, 128, 0.2);
+}
+
+/* Ensure headings have neon glow */
+.krystal-header h1.logo {
+  background: none;
+  -webkit-text-fill-color: #00ffcc;
+  text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+}
+
+body.dark-mode {
+  /* Cyberpunk is inherently dark, making "dark mode" just dial down the brightness slightly */
+  --base-glass-bg: rgba(0, 0, 0, 0.9);
+  --wallpaper-img: none;
+}

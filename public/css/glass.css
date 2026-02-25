@@ -1,0 +1,510 @@
+/* glass.css - Core Styling and Theming for KrystalOS */
+
+:root {
+  /* Fonts */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --transition-speed: 0.3s;
+  
+  /* Defaults fallbacks if theme is missing */
+  --krystal-bg: #0f172a;
+  --krystal-text: #f8fafc;
+  --base-glass-bg: rgba(255, 255, 255, 0.05);
+  --base-glass-border: rgba(255, 255, 255, 0.1);
+  --base-glass-blur: blur(12px);
+  --base-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --focus-ring-color: #3b82f6;
+  --wallpaper-bg: #0f172a;
+  --wallpaper-img: none;
+  --bloop-bg: transparent;
+  --menu-hover: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark Mode is now handled by the themes dynamically overriding the variables */
+body.reduce-motion * {
+  --transition-speed: 0s !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Ensure elements that rely on animations to become visible don't get stuck at opacity 0 */
+body.reduce-motion .glass-context-menu,
+body.reduce-motion .krystal-toast,
+body.reduce-motion .auth-card {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+body.large-text {
+  font-size: 115%;
+}
+
+/* Base resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.krystal-body {
+  background-color: var(--krystal-bg);
+  color: var(--krystal-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Smooth transition for theme switching unless reduce-motion is active */
+  transition: background-color var(--transition-speed) ease;
+}
+
+/* Utilities for screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus Traps and Rings for A11y */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: var(--base-glass-bg);
+  backdrop-filter: var(--base-glass-blur);
+  -webkit-backdrop-filter: var(--base-glass-blur);
+  border: 1px solid var(--base-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--base-shadow);
+  transition:
+    box-shadow var(--transition-speed) ease,
+    border var(--transition-speed) ease;
+}
+
+.glass-panel:hover {
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Header & Typography */
+.krystal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  margin: 1rem;
+  border-radius: 20px;
+}
+
+.krystal-header h1.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Interactive Buttons */
+.btn-glass {
+  min-width: 44px; /* A11y Tap Target Size */
+  min-height: 44px; /* A11y Tap Target Size */
+  background: var(--base-glass-bg);
+  border: 1px solid var(--base-glass-border);
+  color: var(--krystal-text);
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-speed);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
+
+/* Context Menu - macOS Style */
+.glass-context-menu {
+  position: absolute;
+  z-index: 2000;
+  background: var(--base-glass-bg);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--base-glass-border);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  color: var(--krystal-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, var(--font-sans);
+  
+  /* Modern macOS Spring Animation */
+  opacity: 0;
+  transform: scale(0.9);
+  animation: contextMenuFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes contextMenuFadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.glass-context-menu ul {
+  list-style: none;
+}
+.glass-context-menu > ul > li {
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  font-size: 0.95rem;
+  transition: background 0s, transform 0.1s ease;
+  position: relative; /* For submenus */
+}
+.glass-context-menu > ul > li:active {
+  transform: scale(0.98);
+}
+.glass-context-menu li:hover,
+.glass-context-menu li:focus {
+  background: var(--focus-ring-color);
+  color: #fff;
+  outline: none;
+}
+.glass-context-menu li:hover .submenu-arrow {
+  color: #fff;
+}
+
+/* Submenu Styles */
+.krystal-submenu {
+  margin-top: 5px;
+  padding: 0.25rem;
+  border-radius: 8px;
+  border-left: 2px solid var(--focus-ring-color);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+  /* Submenu animation */
+  animation: submenuSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+body.dark-mode .krystal-submenu {
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.krystal-submenu li {
+  padding: 0.5rem 1rem;
+  font-size: 0.9em;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  transition: all var(--transition-speed);
+}
+.krystal-submenu li:hover {
+  background: var(--menu-hover);
+  padding-left: 1.2rem; /* Nice slide-right effect on hover */
+}
+
+@keyframes submenuSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Edit Mode Visuals */
+body.is-editing .glass-panel {
+  border: 1px dashed rgba(59, 130, 246, 0.5); /* Blue dashed border when editing */
+  animation: pulse-border 2s infinite ease-in-out;
+}
+body.is-editing iframe {
+  pointer-events: none !important; /* Stop iframe from stealing drag events */
+}
+
+@keyframes pulse-border {
+  0% { border-color: rgba(59, 130, 246, 0.2); }
+  50% { border-color: rgba(59, 130, 246, 0.8); }
+  100% { border-color: rgba(59, 130, 246, 0.2); }
+}
+
+/* Dynamic Wallpaper */
+.krystal-wallpaper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--wallpaper-bg);
+  background-image: var(--wallpaper-img);
+  z-index: -2;
+  transition: all var(--transition-speed) ease;
+}
+
+/* The interactive blob that follows the cursor */
+.bloop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 50vw;
+  background: var(--bloop-bg);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  transform: translate(-50%, -50%);
+  filter: blur(60px);
+  transition: transform 0.1s linear, background var(--transition-speed) ease; 
+}
+
+/* --- Toast Notifications --- */
+#krystal-toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 9999;
+  pointer-events: none; /* Let clicks pass through container */
+}
+
+.krystal-toast {
+  pointer-events: auto; /* Re-enable clicks on the toast itself */
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--base-glass-bg);
+  backdrop-filter: var(--base-glass-blur);
+  border: 1px solid var(--base-glass-border);
+  box-shadow: var(--base-shadow);
+  padding: 1rem;
+  border-radius: 12px;
+  color: var(--krystal-text);
+  min-width: 300px;
+  max-width: 400px;
+  
+  /* Entrance Animation */
+  opacity: 0;
+  transform: translateX(50px) scale(0.9);
+  animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.krystal-toast.toast-exit {
+  animation: toastSlideOut 0.3s ease-in forwards;
+}
+
+.toast-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-content strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.toast-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.toast-action-btn {
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--krystal-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background var(--transition-speed);
+}
+.toast-action-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .toast-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .toast-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--krystal-text);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.2rem;
+  transition: opacity var(--transition-speed);
+}
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* Toast Color Accents */
+.krystal-toast.toast-error { border-left: 4px solid #ef4444; }
+.krystal-toast.toast-warning { border-left: 4px solid #f59e0b; }
+.krystal-toast.toast-success { border-left: 4px solid #10b981; }
+.krystal-toast.toast-info { border-left: 4px solid #3b82f6; }
+
+@keyframes toastSlideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastSlideOut {
+  to {
+    opacity: 0;
+    transform: translateX(50px) scale(0.9);
+  }
+}
+
+/* --- Auth Overlay & Forms --- */
+.krystal-auth-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wallpaper-bg);
+  /* Use the pseudo-backdrop from the wallpaper */
+  backdrop-filter: blur(10px);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--base-glass-bg);
+  backdrop-filter: var(--base-glass-blur);
+  border: 1px solid var(--base-glass-border);
+  box-shadow: var(--base-shadow);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  color: var(--krystal-text);
+  
+  opacity: 0;
+  transform: translateY(20px);
+  animation: authFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes authFadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+.auth-card p.subtitle {
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+
+.krystal-form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+.krystal-form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.krystal-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--base-glass-border);
+  color: var(--krystal-text);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all var(--transition-speed);
+}
+.krystal-input:focus {
+  outline: none;
+  border-color: var(--focus-ring-color);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+body.dark-mode .krystal-input {
+  background: rgba(0, 0, 0, 0.2);
+}
+body.dark-mode .krystal-input:focus {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--focus-ring-color);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity var(--transition-speed), transform 0.1s;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.auth-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-left-color: var(--focus-ring-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+body.dark-mode .spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-left-color: var(--focus-ring-color);
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }

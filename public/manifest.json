@@ -1,0 +1,9 @@
+{
+  "name": "KrystalOS",
+  "short_name": "Krystal",
+  "description": "Sistema Operativo Empresarial Basado en Widgets",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a"
+}

@@ -1,0 +1,44 @@
+/* Forest Zen Theme (Natural, calming) */
+:root {
+  --krystal-bg: #f4fce3;
+  --krystal-text: #2b5a2b;
+  
+  --base-glass-bg: rgba(255, 255, 255, 0.6);
+  --base-glass-border: rgba(134, 239, 172, 0.5);
+  --base-glass-blur: blur(25px);
+  --base-shadow: 0 8px 32px 0 rgba(20, 83, 45, 0.1);
+  
+  --focus-ring-color: #22c55e;
+  
+  --wallpaper-bg: #f0fdf4;
+  --wallpaper-img: 
+    radial-gradient(circle at 0% 0%, rgba(187, 247, 208, 0.6), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(134, 239, 172, 0.4), transparent 50%);
+    
+  --bloop-bg: radial-gradient(circle at center, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0) 60%);
+  --menu-hover: rgba(34, 197, 94, 0.1);
+}
+
+.krystal-header h1.logo {
+  background: none;
+  -webkit-text-fill-color: #166534;
+}
+
+body.dark-mode {
+  --krystal-bg: #052e16;
+  --krystal-text: #dcfce7;
+  --base-glass-bg: rgba(6, 78, 59, 0.6);
+  --base-glass-border: rgba(134, 239, 172, 0.2);
+  
+  --wallpaper-bg: #022c22;
+  --wallpaper-img: 
+    radial-gradient(circle at 0% 0%, rgba(6, 78, 59, 0.8), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(6, 95, 70, 0.6), transparent 50%);
+    
+  --bloop-bg: radial-gradient(circle at center, rgba(134, 239, 172, 0.1) 0%, rgba(134, 239, 172, 0) 60%);
+  --menu-hover: rgba(255, 255, 255, 0.1);
+  
+  .krystal-header h1.logo {
+    -webkit-text-fill-color: #86efac;
+  }
+}
