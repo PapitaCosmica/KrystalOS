@@ -8,6 +8,9 @@
 pip install -e .
 ```
 
+## 📖 Official Documentation
+Read the complete guide and comprehensive manuals on how to use KrystalOS at the **[Official GitHub Wiki](https://github.com/PapitaCosmica/KrystalOS/wiki)**.
+
 ## CLI Command Reference (`krystal --help`)
 
 ### `krystal init [OPTIONS] [NAME]`
@@ -83,4 +86,7 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 2 | Gateway — dynamic PHP port mapping ✅ |
 | Phase 3 | Event Bus — WebSocket EventManager ✅ |
 | Phase 4 | Lite Mode & Bundler — portable binary bundles ✅ |
-| Phase 5 | Community — GitHub widget registry ⏳ |
+| Phase 5 | Community — GitHub widget registry & Market ✅ |
+
+---
+**Desarrollado con ❤ por PapitaCosmica**
