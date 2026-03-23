@@ -1,0 +1,1 @@
+"""KrystalOS CLI package."""

@@ -1,0 +1,48 @@
+# ── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# ── Virtual environments ─────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── pip editable install ─────────────────────────────────────────────
+*.egg-link
+pip-selfcheck.json
+
+# ── KrystalOS runtime state ──────────────────────────────────────────
+.krystal/state.json
+.krystal/ports.json
+.krystal/logs/
+
+# ── IDE / Editor ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing ──────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Widgets (user-generated — not tracked in the framework repo) ──────
+widgets/*/
+!widgets/.gitkeep
+
+# ── Logs ─────────────────────────────────────────────────────────────
+*.log

@@ -1,0 +1,112 @@
+"""
+KrystalOS — cli/main.py
+Root Typer application. Registers all krystal-commander commands.
+"""
+
+from __future__ import annotations
+
+import typer
+from rich.console import Console
+
+from cli.commands.init import init_project
+from cli.commands.make_widget import make_widget
+from cli.commands.doctor import run_doctor
+from cli.commands.install import install_widget
+
+app = typer.Typer(
+    name="krystal",
+    help=(
+        "🔷  [bold cyan]KrystalOS Commander[/] — "
+        "Modular micro-services orchestrator CLI."
+    ),
+    rich_markup_mode="rich",
+    add_completion=True,
+    no_args_is_help=True,
+)
+
+console = Console()
+
+
+# ---------------------------------------------------------------------------
+# krystal init <name>
+# ---------------------------------------------------------------------------
+
+@app.command("init")
+def cmd_init(
+    name: str = typer.Argument(..., help="Project name / directory to create"),
+) -> None:
+    """
+    🏗  Scaffold a new KrystalOS project.
+
+    Creates the standard directory layout (cli/, core/, widgets/, shared/,
+    .krystal/) and a global [bold]krystal.config.json[/].
+    """
+    init_project(name)
+
+
+# ---------------------------------------------------------------------------
+# krystal make:widget
+# ---------------------------------------------------------------------------
+
+@app.command("make:widget")
+def cmd_make_widget() -> None:
+    """
+    🧩  Interactive wizard to generate a new widget.
+
+    Prompts for name, language, version and grid size, then scaffolds the
+    widget folder with a validated [bold]krystal.json[/], a language
+    starter file, and a Tailwind Glassmorphism [bold]ui.html[/].
+    """
+    make_widget()
+
+
+# ---------------------------------------------------------------------------
+# krystal doctor
+# ---------------------------------------------------------------------------
+
+@app.command("doctor")
+def cmd_doctor(
+    bundle: bool = typer.Option(
+        False,
+        "--bundle",
+        help="(Phase 4) Prepare portable binary bundles for Lite Mode.",
+    ),
+) -> None:
+    """
+    🩺  Run hardware & software diagnostics.
+
+    Reports RAM, CPU, and PATH availability for php, python, node and
+    docker. Suggests Lite Mode if available RAM is below 4 GB.
+    """
+    run_doctor(bundle=bundle)
+
+
+# ---------------------------------------------------------------------------
+# krystal install <url>  (Phase 5 stub)
+# ---------------------------------------------------------------------------
+
+@app.command("install")
+def cmd_install(
+    url: str = typer.Argument(
+        ..., help="GitHub URL of the widget to install (Phase 5)."
+    ),
+) -> None:
+    """
+    📦  [dim](Phase 5)[/] Install a widget from a GitHub repository.
+
+    Will sparse-clone only the widget subfolder, validate its
+    [bold]krystal.json[/], and register it in the local project.
+    """
+    install_widget(url)
+
+
+# ---------------------------------------------------------------------------
+# Entry-point
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    app()
+
+
+if __name__ == "__main__":
+    main()
