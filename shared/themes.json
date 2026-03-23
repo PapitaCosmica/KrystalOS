@@ -1,0 +1,26 @@
+{
+  "light": {
+    "krystal-bg": "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 50%, #d1d5db 100%)",
+    "krystal-glass": "rgba(255, 255, 255, 0.7)",
+    "krystal-glass-border": "rgba(255, 255, 255, 0.5)",
+    "krystal-text": "#1f2937",
+    "krystal-text-muted": "#4b5563",
+    "krystal-accent": "#3b82f6"
+  },
+  "dark": {
+    "krystal-bg": "linear-gradient(135deg, #09090e 0%, #1a153a 50%, #0d0b1a 100%)",
+    "krystal-glass": "rgba(20, 15, 45, 0.4)",
+    "krystal-glass-border": "rgba(255, 255, 255, 0.05)",
+    "krystal-text": "#f3f4f6",
+    "krystal-text-muted": "#9ca3af",
+    "krystal-accent": "#8b5cf6"
+  },
+  "neon": {
+    "krystal-bg": "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #050505 100%)",
+    "krystal-glass": "rgba(0, 0, 0, 0.8)",
+    "krystal-glass-border": "rgba(0, 255, 128, 0.3)",
+    "krystal-text": "#ffffff",
+    "krystal-text-muted": "#a3a3a3",
+    "krystal-accent": "#00ff80"
+  }
+}

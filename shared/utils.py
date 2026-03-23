@@ -56,3 +56,29 @@ def ensure_krystal_project(cwd: Path | None = None) -> Path:
     raise FileNotFoundError(
         "Not inside a KrystalOS project. Run `krystal init <name>` first."
     )
+
+import platform
+
+def get_php_executable() -> str:
+    """Resolve the portable PHP executable or fallback to OS default."""
+    try:
+        project_root = ensure_krystal_project()
+        local_php = project_root / "bin" / ("php-cgi.exe" if platform.system() == "Windows" else "php-cgi")
+        if local_php.exists():
+            return str(local_php)
+    except FileNotFoundError:
+        pass
+        
+    return "php-cgi.exe" if platform.system() == "Windows" else "php-cgi"
+
+def get_node_executable() -> str:
+    """Resolve the portable Node executable or fallback to OS default."""
+    try:
+        project_root = ensure_krystal_project()
+        local_node = project_root / "bin" / ("node.exe" if platform.system() == "Windows" else "node")
+        if local_node.exists():
+            return str(local_node)
+    except FileNotFoundError:
+        pass
+
+    return "node"

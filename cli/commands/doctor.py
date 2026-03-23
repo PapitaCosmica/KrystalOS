@@ -136,19 +136,45 @@ def run_doctor(bundle: bool = False) -> None:
     console.print()
 
     # ------------------------------------------------------------------ #
-    # 3. AI Suggestion — Lite Mode                                         #
+    # 3. AI Suggestion — Hardware & Empathetic Assistant                 #
     # ------------------------------------------------------------------ #
-    if mem.available < _LITE_MODE_RAM_THRESHOLD:
-        avail_gb = mem.available / (1024 ** 3)
+    # 2GB RAM threshold (Phase 4 Guard)
+    ram_guard = 2 * 1024 ** 3 
+    
+    suggestions = []
+    
+    # RAM Check
+    if mem.available < ram_guard:
+        suggestions.append(
+            "[yellow]He notado que tu RAM libre es algo ajustada (< 2GB).[/]\n"
+            "El [bold]RAM Guard[/] de KrystalOS se activará automáticamente para frenar tareas\n"
+            "pesadas y comprimir imágenes. ¿Quizás quieras desactivar el modo Glassmorphism?"
+        )
+    
+    # CPU Check
+    try:
+        cpu_freq = psutil.cpu_freq()
+        if cpu_freq and cpu_freq.max and cpu_freq.max < 2000:
+            suggestions.append(
+                "[yellow]Parece que tu procesador es un poco antiguo (< 2.0 GHz).[/]\n"
+                "Para que KrystalOS siga [italic bold]volando[/], recomendaría desactivar las sombras pesadas."
+            )
+    except Exception:
+        pass
+
+    # Missing Binary Empathy
+    if not found_map.get("php"):
+        suggestions.append(
+            "[reset]Parece que tu PC no tiene PHP, pero no te preocupes, ¡yo me encargo de traer una\n"
+            "versión ligera (php-cgi) portable para ti cuando corras [cyan]krystal bundle[/]![/]"
+        )
+
+    if suggestions:
         console.print(
             Panel(
-                f"[yellow]⚠  Available RAM is low ({avail_gb:.2f} GB).[/]\n\n"
-                "Consider activating [bold]Lite Mode[/] to run widgets natively\n"
-                "without Docker, reducing memory overhead.\n\n"
-                "[dim]Set [bold]default_mode[/] to [bold]\"native\"[/] in your "
-                "[bold]krystal.config.json[/] to enable Lite Mode.[/]",
-                title="[bold yellow]💡 Lite Mode Suggestion (Phase 4)[/]",
-                border_style="yellow",
+                "\n\n".join(suggestions),
+                title="[bold magenta]💡 Krystal AI Assistant[/]",
+                border_style="magenta",
             )
         )
 

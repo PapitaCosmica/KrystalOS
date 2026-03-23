@@ -33,6 +33,7 @@ from fastapi.responses import Response, FileResponse
 
 from core.discovery import WidgetRegistry, WidgetEntry, validate_proxy_path
 from core.schema import SupportedLanguage
+from shared.utils import get_php_executable, get_node_executable
 
 logger = logging.getLogger("krystal.gateway")
 
@@ -160,9 +161,12 @@ async def _proxy_php(entry: WidgetEntry, path: str, request: Request) -> Respons
     if entry.process is None or entry.process.returncode is not None:
         port = _next_available_port(PHP_BASE_PORT)
         entry.port = port
-        php_cgi = shutil.which("php-cgi") or shutil.which("php")
+        
+        php_path = get_php_executable()
+        php_cgi = php_path if os.path.isabs(php_path) else (shutil.which(php_path) or shutil.which("php"))
+        
         if not php_cgi:
-            raise HTTPException(status_code=503, detail="php-cgi binary not found in PATH.")
+            raise HTTPException(status_code=503, detail="php-cgi binary not found in PATH or portable /bin.")
 
         env = {
             **os.environ,
@@ -229,9 +233,12 @@ async def _proxy_node(entry: WidgetEntry, path: str, request: Request) -> Respon
     if entry.process is None or entry.process.returncode is not None:
         port = _next_available_port(NODE_BASE_PORT)
         entry.port = port
-        node_bin = shutil.which("node")
+        
+        node_path = get_node_executable()
+        node_bin = node_path if os.path.isabs(node_path) else shutil.which(node_path)
+        
         if not node_bin:
-            raise HTTPException(status_code=503, detail="node binary not found in PATH.")
+            raise HTTPException(status_code=503, detail="node binary not found in PATH or portable /bin.")
 
         logger.info("[%s] Starting node on port %d", entry.manifest.name, port)
         entry.process = await asyncio.create_subprocess_exec(

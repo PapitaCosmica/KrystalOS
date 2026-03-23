@@ -12,8 +12,17 @@ class KrystalBridge {
         this.socket = null;
         this.listeners = {}; // eventName -> array of callbacks
         this.reconnectAttempts = 0;
-        
-        this.connect();
+        // Default system theme subscriptions
+        this.on('THEME_CHANGED', (themeDict) => this._applyThemeVariables(themeDict));
+    }
+
+    _applyThemeVariables(themeDict) {
+        // Apply CSS variables to the host document so they pierce through Shadow DOM
+        const root = document.documentElement;
+        for (const [key, value] of Object.entries(themeDict)) {
+            root.style.setProperty(`--${key}`, value);
+        }
+        console.log(`[KrystalOS] 🎨 Theme applied via EventBus.`);
     }
 
     connect() {
@@ -73,7 +82,10 @@ class KrystalBridge {
     // Internal dispatcher
     _dispatch(eventName, data, sender) {
         const callbacks = this.listeners[eventName] || [];
-        callbacks.forEach(cb => {
+        // Support wildcard fallback listeners
+        const wildcard = this.listeners['*'] || [];
+        
+        [...callbacks, ...wildcard].forEach(cb => {
             try {
                 cb(data, sender);
             } catch (err) {

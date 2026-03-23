@@ -6,11 +6,17 @@
   <title>KrystalOS 🔷 Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/static/krystal-bridge.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
   <style>
+    :root {
+      {% for key, val in theme_vars.items() %}
+      --{{ key }}: {{ val }};
+      {% endfor %}
+    }
     body {
-      background: linear-gradient(135deg, #09090e 0%, #1a153a 50%, #0d0b1a 100%);
+      background: var(--krystal-bg);
       min-height: 100vh;
-      color: white;
+      color: var(--krystal-text);
       font-family: 'Inter', system-ui, sans-serif;
     }
     
@@ -24,10 +30,10 @@
     }
 
     .bento-cell {
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--krystal-glass);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--krystal-glass-border);
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
       border-radius: 1.5rem;
       overflow: hidden;
@@ -114,9 +120,33 @@
           // Clear loading state
           slot.innerHTML = '';
           
+          // JS Bridge Init for this widget
+          const bridgeScript = document.createElement('script');
+          bridgeScript.textContent = `window.Krystal = window.parent.KrystalInitBridge('${widgetName}');`;
+          
+          // Cascading CSS Variables to the Shadow DOM boundaries
+          const style = document.createElement("style");
+          style.textContent = `
+            :host {
+              ${Array.from(document.documentElement.style).map(name => `${name}: ${document.documentElement.style.getPropertyValue(name)};`).join('\\n')}
+              --krystal-bg: var(--krystal-bg, linear-gradient(135deg, #09090e 0%, #1a153a 50%, #0d0b1a 100%));
+              --krystal-glass: var(--krystal-glass, rgba(20, 15, 45, 0.4));
+              --krystal-glass-border: var(--krystal-glass-border, rgba(255, 255, 255, 0.05));
+              --krystal-text: var(--krystal-text, #f3f4f6);
+            }
+          `;
+
+          // Global static styles link
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = "/static/styles.css";
+
           // Isolate widget styles/scripts using Shadow DOM (Open mode for Event Bus access)
           const shadow = slot.attachShadow({ mode: 'open' });
           shadow.innerHTML = html;
+          shadow.appendChild(style);
+          shadow.appendChild(link);
+          shadow.appendChild(bridgeScript);
         } catch (err) {
           console.error(`Failed to load UI for ${widgetName}:`, err);
           slot.innerHTML = `

@@ -11,6 +11,7 @@ Runs autodiscovery on startup, applies GZip compression, and serves:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from pathlib import Path
 
@@ -23,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from core.discovery import WidgetScanner, WidgetRegistry
 from core.gateway import build_gateway_router, zombie_sweeper
 from core.event_manager import router as event_router
+from core.optimization import MemoryOptimizationMiddleware
 from shared.utils import ensure_krystal_project
 
 # ---------------------------------------------------------------------------
@@ -58,6 +60,8 @@ app = FastAPI(
     description="Modular orchestrator with realtime event bus.",
 )
 
+# Phase 4: Install RAM guard before GZip
+app.add_middleware(MemoryOptimizationMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Serve Phase 3 Frontend bridge script
@@ -103,9 +107,23 @@ async def on_shutdown() -> None:
 @app.get("/", response_class=HTMLResponse, tags=["dashboard"])
 async def dashboard(request: Request):
     """Render the Bento Grid dashboard."""
+    # Phase 4: Load global theme (hardcoded to 'dark' for now, could load from config)
+    theme_vars = {}
+    try:
+        themes_path = PROJECT_ROOT / "shared" / "themes.json"
+        if themes_path.exists():
+            themes_data = json.loads(themes_path.read_text("utf-8"))
+            theme_vars = themes_data.get("dark", {})
+    except Exception as e:
+        logger.error(f"Failed to load themes.json: {e}")
+
     return templates.TemplateResponse(
         "dashboard.html",
-        {"request": request, "widgets": registry.summary()}
+        {
+            "request": request,
+            "widgets": registry.summary(),
+            "theme_vars": theme_vars
+        }
     )
 
 @app.get("/health", tags=["system"])

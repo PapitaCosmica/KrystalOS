@@ -13,6 +13,7 @@ from cli.commands.make_widget import make_widget
 from cli.commands.doctor import run_doctor
 from cli.commands.install import install_widget
 from cli.commands.serve import serve_app
+from cli.bundler import bundle_app
 
 app = typer.Typer(
     name="krystal",
@@ -105,6 +106,11 @@ def cmd_install(
 # krystal serve (Command Group)
 # ---------------------------------------------------------------------------
 app.add_typer(serve_app, name="serve")
+
+# ---------------------------------------------------------------------------
+# krystal bundle (Command Group)
+# ---------------------------------------------------------------------------
+app.add_typer(bundle_app, name="bundle")
 
 # ---------------------------------------------------------------------------
 # Entry-point
