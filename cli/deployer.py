@@ -15,7 +15,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from core.schema import load_krystal_json
+from core.schema import load_widget_manifest
 from shared.utils import ensure_krystal_project
 
 console = Console()
@@ -48,7 +48,7 @@ def _run_preflight_checks(target_dir: Path) -> bool:
         return False
         
     try:
-        manifest = load_krystal_json(manifest_path)
+        manifest = load_widget_manifest(manifest_path)
     except ValueError as e:
         console.print(f"[red]✗ Invalid `krystal.json`:[/] {e}")
         return False
@@ -93,7 +93,7 @@ def deploy_widget(
         if not _run_preflight_checks(target_dir):
             raise typer.Exit(code=1)
 
-        manifest = load_krystal_json(target_dir / "krystal.json")
+        manifest = load_widget_manifest(target_dir / "krystal.json")
 
         # Naming Convention Application
         prefix_map = {
