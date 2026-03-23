@@ -10,6 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import typer
+from jinja2 import Environment, FileSystemLoader
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt, IntPrompt
@@ -191,6 +192,18 @@ def make_widget() -> None:
         encoding="utf-8",
     )
 
+    # Document Generator (README.md)
+    try:
+        env = Environment(loader=FileSystemLoader(str(project_root / "templates")))
+        readme_template = env.get_template("widget_readme.md")
+        # model_dump() gets the dictionary representation
+        rendered_readme = readme_template.render(**manifest.model_dump())
+        (widget_dir / "README.md").write_text(rendered_readme, encoding="utf-8")
+        readme_str = "\n  [green]•[/] README.md"
+    except Exception as e:
+        console.print(f"[yellow]⚠ Failed to auto-generate README.md:[/] {e}")
+        readme_str = ""
+
     # --- Summary table ---
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column(style="dim")
@@ -212,5 +225,5 @@ def make_widget() -> None:
         f"\n  [dim]Files generated:[/]\n"
         f"  [green]•[/] krystal.json\n"
         f"  [green]•[/] {filename}\n"
-        f"  [green]•[/] ui.html\n"
+        f"  [green]•[/] ui.html{readme_str}\n"
     )

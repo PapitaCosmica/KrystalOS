@@ -79,10 +79,16 @@
   <main class="bento-grid">
     {% for widget in widgets %}
     <section 
-      class="bento-cell" 
+      class="bento-cell relative" 
       style="grid-column: span {{ widget.grid.w }}; grid-row: span {{ widget.grid.h }};"
       id="widget-slot-{{ widget.name }}"
       data-widget="{{ widget.name }}">
+      {% if not widget.signature %}
+      <div class="absolute top-4 right-4 z-50 flex items-center gap-1 bg-yellow-900/60 border border-yellow-500/30 px-2 py-1 rounded-full shadow-lg backdrop-blur-md cursor-help transition-all hover:bg-yellow-800/80" title="This widget is downloaded from a third-party and lacks an official KrystalOS signature. Proceed with caution.">
+        <span class="text-xs">⚠️</span>
+        <span class="text-[10px] uppercase font-bold text-yellow-400 tracking-wider">Unverified</span>
+      </div>
+      {% endif %}
       <!-- Shadow DOM injected here -->
       <div class="w-full h-full flex items-center justify-center p-8 text-white/30 animate-pulse">
         Loading {{ widget.name }}...

@@ -11,9 +11,11 @@ from rich.console import Console
 from cli.commands.init import init_project
 from cli.commands.make_widget import make_widget
 from cli.commands.doctor import run_doctor
-from cli.commands.install import install_widget
+from cli.commands.dev_guide import show_dev_guide
+from cli.commands.install import install_widget, update_widget
 from cli.commands.serve import serve_app
 from cli.bundler import bundle_app
+from cli.deployer import deploy_app
 
 app = typer.Typer(
     name="krystal",
@@ -84,23 +86,48 @@ def cmd_doctor(
 
 
 # ---------------------------------------------------------------------------
-# krystal install <url>  (Phase 5 stub)
+# krystal install <url>
 # ---------------------------------------------------------------------------
 
 @app.command("install")
 def cmd_install(
     url: str = typer.Argument(
-        ..., help="GitHub URL of the widget to install (Phase 5)."
+        ..., help="GitHub URL of the widget to install."
     ),
 ) -> None:
     """
-    📦  [dim](Phase 5)[/] Install a widget from a GitHub repository.
-
-    Will sparse-clone only the widget subfolder, validate its
-    [bold]krystal.json[/], and register it in the local project.
+    📦  Install a widget from the Krystal Market ecosystem.
+    
+    Downloads the widget repository and scans it with the Sandbox Guard.
     """
     install_widget(url)
 
+# ---------------------------------------------------------------------------
+# krystal update <name>
+# ---------------------------------------------------------------------------
+
+@app.command("update")
+def cmd_update(
+    name: str = typer.Argument(
+        ..., help="Name of the installed widget to update."
+    ),
+) -> None:
+    """
+    🔄  Update an installed widget from its external repository.
+    """
+    update_widget(name)
+
+
+# ---------------------------------------------------------------------------
+# krystal dev-guide
+# ---------------------------------------------------------------------------
+
+@app.command("dev-guide")
+def cmd_dev_guide() -> None:
+    """
+    📚  Read the KrystalOS Developer Guide for making widgets.
+    """
+    show_dev_guide()
 
 # ---------------------------------------------------------------------------
 # krystal serve (Command Group)
@@ -111,6 +138,11 @@ app.add_typer(serve_app, name="serve")
 # krystal bundle (Command Group)
 # ---------------------------------------------------------------------------
 app.add_typer(bundle_app, name="bundle")
+
+# ---------------------------------------------------------------------------
+# krystal deploy (Command Group)
+# ---------------------------------------------------------------------------
+app.add_typer(deploy_app, name="deploy")
 
 # ---------------------------------------------------------------------------
 # Entry-point

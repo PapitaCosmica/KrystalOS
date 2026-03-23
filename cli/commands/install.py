@@ -1,42 +1,82 @@
 """
 KrystalOS — cli/commands/install.py
-PHASE 5 STUB: `krystal install <url>` — install a widget from a GitHub URL.
-
-Phase 5 will use sparse-checkout or degit to clone only the widget
-subdirectory from any GitHub repo, then validate its krystal.json
-before adding it to the local /widgets directory.
+Phase 5: Install & Update
+Handles secure downloading from GitHub and subsequent updates.
 """
 
 from __future__ import annotations
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+from core.market import install_from_git, update_git_repo
+from shared.utils import ensure_krystal_project
 
 console = Console()
 
-
 def install_widget(url: str) -> None:
     """
-    Install a KrystalOS widget from a GitHub URL.
-
-    Phase 5 planned behaviour:
-      1. Parse the GitHub URL to extract repo + subdirectory.
-      2. Use `git clone --filter=blob:none --sparse` for minimal download.
-      3. Validate the widget's krystal.json via KrystalWidget.
-      4. Copy widget folder into project's /widgets directory.
-      5. Register widget in .krystal/state.json.
-
-    Current status: stub — prints informational notice.
+    Install a KrystalOS widget, theme, or mod from a GitHub repository.
+    Auto-scans the repository for potential security risks.
     """
-    console.print(
-        Panel(
-            f"[yellow]Phase 5 — Community Registry is not yet implemented.[/]\n\n"
-            f"Requested URL: [bold]{url}[/]\n\n"
-            "When available, this command will:\n"
-            "  [dim]• Sparse-clone only the widget subfolder from GitHub[/]\n"
-            "  [dim]• Validate krystal.json before installation[/]\n"
-            "  [dim]• Register the widget in .krystal/state.json[/]",
-            title="[bold yellow]📦 Install Widget (Phase 5)[/]",
-            border_style="yellow",
-        )
-    )
+    try:
+        project_root = ensure_krystal_project()
+    except FileNotFoundError:
+        console.print("[red]Not inside a KrystalOS project. Run `krystal init` first.[/]")
+        raise typer.Exit(code=1)
+
+    console.print(f"\n[cyan]📦 Krystal Market Install:[/] {url}")
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Downloading and securing codebase...", total=None)
+        success, message = install_from_git(url)
+        progress.update(task, completed=True)
+
+    if success:
+        console.print(f"\n[bold green]✓ Installation Complete![/]")
+        if "[yellow]⚠ Sandbox" in message:
+            console.print(Panel(message, title="Security Notice", border_style="yellow"))
+        else:
+            console.print(f"Widget successfully isolated at: [dim]{message}[/]")
+    else:
+        console.print(f"\n[bold red]❌ Installation Failed:[/] {message}")
+        raise typer.Exit(code=1)
+
+
+def update_widget(widget_name: str) -> None:
+    """
+    Updates an installed widget by fetching the latest code from its repository.
+    """
+    try:
+        project_root = ensure_krystal_project()
+    except FileNotFoundError:
+        console.print("[red]Not inside a KrystalOS project. Run `krystal init` first.[/]")
+        raise typer.Exit(code=1)
+
+    widget_dir = project_root / "widgets" / widget_name
+    if not widget_dir.exists():
+        console.print(f"[red]Widget '{widget_name}' is not installed.[/]")
+        raise typer.Exit(code=1)
+
+    console.print(f"\n[cyan]🔄 Updating '{widget_name}'...[/]")
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Pulling latest telemetry from GitHub...", total=None)
+        success, message = update_git_repo(widget_dir)
+        progress.update(task, completed=True)
+
+    if success:
+        console.print(f"[bold green]✓ Update Successful![/]")
+        console.print(f"[dim]{message}[/]")
+    else:
+        console.print(f"[bold red]❌ Update Failed:[/] {message}")
