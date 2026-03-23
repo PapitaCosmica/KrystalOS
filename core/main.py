@@ -18,9 +18,11 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 from core.discovery import WidgetScanner, WidgetRegistry
 from core.gateway import build_gateway_router, zombie_sweeper
+from core.event_manager import router as event_router
 from shared.utils import ensure_krystal_project
 
 # ---------------------------------------------------------------------------
@@ -52,12 +54,14 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 # ---------------------------------------------------------------------------
 app = FastAPI(
     title="KrystalOS",
-    version="0.2.0",
-    description="Modular orchestrator for PHP, Python, and JS widgets.",
+    version="0.3.0",
+    description="Modular orchestrator with realtime event bus.",
 )
 
-# Phase 2: Compresión de recursos
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Serve Phase 3 Frontend bridge script
+app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
 
 @app.on_event("startup")
 async def on_startup() -> None:
@@ -74,9 +78,23 @@ async def on_startup() -> None:
     gateway = build_gateway_router(registry)
     app.include_router(gateway)
     
+    # Mount Phase 3 Event Bus
+    app.include_router(event_router)
+
     # Start zombie sweeper task to kill idle processes
     asyncio.create_task(zombie_sweeper(registry))
-    logger.info("Gateway router mounted. Zombie sweeper active.")
+    logger.info("Gateway router mounted. Zombie sweeper active. Event Bus online ⚡.")
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    """Gracefully terminate background tasks and SQLite connections."""
+    logger.info("KrystalOS Orchestrator shutting down...")
+    try:
+        from core.db import get_engine
+        get_engine().dispose()
+        logger.info("[DB] Database connections closed.")
+    except Exception as e:
+        logger.error(f"[DB] Error closing database: {e}")
 
 # ---------------------------------------------------------------------------
 # Endpoints

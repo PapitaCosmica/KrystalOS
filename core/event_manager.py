@@ -1,76 +1,105 @@
 """
 KrystalOS — core/event_manager.py
-PHASE 3 STUB: WebSocket-based Event Bus for inter-widget communication.
-
-Widgets declare events_emitted / events_subscribed in krystal.json.
-EventManager will wire those declarations into live pub-sub channels.
+Phase 3: The Nervous System (Event Bus)
+Handles realtime WebSocket communication between widgets.
 """
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Callable
+import json
+import logging
+from typing import Any
 
-# Future Phase 3 imports (uncomment when implementing):
-# import websockets
-# from websockets.server import WebSocketServerProtocol
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from core.discovery import WidgetRegistry
+
+logger = logging.getLogger("krystal.events")
+router = APIRouter(prefix="/ws", tags=["events"])
 
 class EventManager:
+    """Manages active WebSockets and broadcasts events based on krystal.json capabilities."""
+
+    def __init__(self) -> None:
+        # Map of widget_name -> WebSocket connection
+        self.active_connections: dict[str, WebSocket] = {}
+
+    async def connect(self, widget_name: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self.active_connections[widget_name] = websocket
+        logger.info("[EventBus] Widget '%s' connected to the Nervous System.", widget_name)
+
+    def disconnect(self, widget_name: str) -> None:
+        if widget_name in self.active_connections:
+            del self.active_connections[widget_name]
+            logger.info("[EventBus] Widget '%s' disconnected.", widget_name)
+
+    async def broadcast(self, sender: str, event: str, data: Any, registry: WidgetRegistry) -> None:
+        """
+        Broadcast an event.
+        Only sends to widgets whose krystal.json says they subscribe to this event.
+        """
+        sender_entry = registry.get(sender)
+        if not sender_entry:
+            logger.warning("[EventBus] Rejected event '%s' from unknown sender '%s'", event, sender)
+            return
+            
+        # Optional: Validate sender is allowed to emit this event
+        if event not in sender_entry.manifest.capabilities.events_emitted:
+            logger.warning("[EventBus] Sender '%s' is not authorized to emit '%s'. Please add it to krystal.json", sender, event)
+        
+        payload = json.dumps({
+            "sender": sender,
+            "event": event,
+            "data": data
+        })
+
+        dispatched = 0
+        for target_name, ws in self.active_connections.items():
+            if target_name == sender:
+                continue # Don't echo back to sender unless needed
+                
+            target_entry = registry.get(target_name)
+            if not target_entry:
+                continue
+                
+            # Check if target is subscribed
+            if event in target_entry.manifest.capabilities.events_subscribed or "*" in target_entry.manifest.capabilities.events_subscribed:
+                try:
+                    await ws.send_text(payload)
+                    dispatched += 1
+                except Exception as e:
+                    logger.error("[EventBus] Failed to send to '%s': %s", target_name, e)
+
+        logger.info("[EventBus] Event '%s' from '%s' dispatched to %d subscribers.", event, sender, dispatched)
+
+
+# Global instance
+manager = EventManager()
+
+@router.websocket("/events/{widget_name}")
+async def websocket_endpoint(websocket: WebSocket, widget_name: str):
     """
-    Central event bus for KrystalOS widgets.
-
-    Phase 3 will:
-      - Run a local WebSocket server (default ws://localhost:4242).
-      - Route events by name between subscribed widgets.
-      - Persist an event log for replay / debugging.
-      - Support typed payloads validated via Pydantic.
-
-    Current behaviour: all methods are no-ops or raise NotImplementedError.
+    Krystal-Bridge JS will connect here: ws://localhost:8000/ws/events/<widget_name>
     """
-
-    def __init__(self, host: str = "localhost", port: int = 4242) -> None:
-        self.host = host
-        self.port = port
-        # TODO (Phase 3): replace with async-safe subscriber registry
-        self._subscribers: dict[str, list[Callable]] = {}
-
-    # ------------------------------------------------------------------
-    # Public API (Phase 3 contract)
-    # ------------------------------------------------------------------
-
-    def subscribe(self, event: str, handler: Callable[[Any], None]) -> None:
-        """
-        Register *handler* to be called whenever *event* is emitted.
-
-        Phase 3 will support coroutine handlers for async widgets.
-        """
-        raise NotImplementedError(
-            f"EventManager.subscribe('{event}') — Phase 3 not yet implemented."
-        )
-
-    def emit(self, event: str, payload: Any = None) -> None:
-        """
-        Broadcast *event* with optional *payload* to all subscribers.
-
-        Phase 3 will serialise payload as JSON and push over WebSocket.
-        """
-        raise NotImplementedError(
-            f"EventManager.emit('{event}') — Phase 3 not yet implemented."
-        )
-
-    async def connect_ws(self, url: str) -> None:
-        """
-        Connect to a remote KrystalOS event bus at *url*.
-
-        Phase 3 will use this for multi-host widget meshes.
-        """
-        raise NotImplementedError(
-            f"EventManager.connect_ws('{url}') — Phase 3 not yet implemented."
-        )
-
-    async def start_server(self) -> None:
-        """Start the local WebSocket event bus server. Phase 3 stub."""
-        raise NotImplementedError(
-            "EventManager.start_server() — Phase 3 not yet implemented."
-        )
+    # Need to access registry to validate subscriptions during broadcast.
+    # We will import the global registry from core.main
+    from core.main import registry
+    
+    await manager.connect(widget_name, websocket)
+    try:
+        while True:
+            text = await websocket.receive_text()
+            try:
+                msg = json.loads(text)
+                sender = msg.get("sender", widget_name)
+                event = msg.get("event")
+                data = msg.get("data", {})
+                
+                if event:
+                    await manager.broadcast(sender, event, data, registry)
+            except json.JSONDecodeError:
+                logger.error("[EventBus] Invalid JSON received from '%s': %s", widget_name, text)
+                
+    except WebSocketDisconnect:
+        manager.disconnect(widget_name)
