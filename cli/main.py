@@ -12,6 +12,7 @@ from cli.commands.init import init_project
 from cli.commands.make_widget import make_widget
 from cli.commands.doctor import run_doctor
 from cli.commands.install import install_widget
+from cli.commands.serve import serve_gateway
 
 app = typer.Typer(
     name="krystal",
@@ -98,6 +99,26 @@ def cmd_install(
     [bold]krystal.json[/], and register it in the local project.
     """
     install_widget(url)
+
+
+# ---------------------------------------------------------------------------
+# krystal serve
+# ---------------------------------------------------------------------------
+
+@app.command("serve")
+def cmd_serve(
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Bind socket to this host."),
+    port: int = typer.Option(8000, "--port", "-p", help="Bind socket to this port."),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for widgets."),
+) -> None:
+    """
+    🚀  Start the KrystalOS Core Gateway Server.
+
+    Runs Uvicorn securely mounting all valid widgets from `/widgets`,
+    providing proxy capabilities and rendering the Bento Dashboard at
+    the root URL.
+    """
+    serve_gateway(host=host, port=port, reload=reload)
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import shutil
 import platform
+import importlib.util
 
 import psutil
 import typer
@@ -117,6 +118,17 @@ def run_doctor(bundle: bool = False) -> None:
         sw_table.add_row(
             binary,
             path or "[dim italic]not found[/]",
+            _status_icon(found),
+        )
+
+    # Add Phase 2 Framework Checks
+    sw_table.add_section()
+    for pkg in ["fastapi", "uvicorn", "sqlmodel"]:
+        spec = importlib.util.find_spec(pkg)
+        found = spec is not None
+        sw_table.add_row(
+            f"📦 {pkg}",
+            spec.origin if found and spec.origin else "[dim italic]not installed[/]",
             _status_icon(found),
         )
 
