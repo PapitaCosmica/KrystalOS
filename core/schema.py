@@ -116,6 +116,9 @@ class KrystalWidget(BaseModel):
     # Multi-Mode
     modes: Modes = Field(default_factory=Modes)
 
+    # Profiling (v1.1.0-beta)
+    widget_class: str = Field(default="standard", alias="class", description="standard or heavy")
+
     def to_krystal_json(self) -> dict:
         """Export back to a krystal.json-compatible dict."""
         return self.model_dump(mode="json")

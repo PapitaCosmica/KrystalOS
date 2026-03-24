@@ -60,11 +60,12 @@ def run_doctor(bundle: bool = False) -> None:
         return
 
     # ------------------------------------------------------------------ #
-    # 1. Hardware Diagnostics                                              #
+    # 1. Hardware Diagnostics & Profiler                                 #
     # ------------------------------------------------------------------ #
+    from cli.system_profiler import profile_system
+    env_state = profile_system()
+
     mem = psutil.virtual_memory()
-    cpu_count_physical = psutil.cpu_count(logical=False) or 0
-    cpu_count_logical = psutil.cpu_count(logical=True) or 0
     cpu_usage = psutil.cpu_percent(interval=0.5)
 
     hw_table = Table(
@@ -85,16 +86,26 @@ def run_doctor(bundle: bool = False) -> None:
         "[green]OK[/]" if mem.available >= _LITE_MODE_RAM_THRESHOLD else "[yellow]LOW[/]",
     )
     hw_table.add_row("RAM Usage", f"{mem.percent:.1f}%", "")
-    hw_table.add_row(
-        "CPU Cores",
-        f"{cpu_count_physical} physical / {cpu_count_logical} logical",
-        "",
-    )
+    hw_table.add_row("CPU Cores", str(env_state.cores), "")
     hw_table.add_row("CPU Usage", f"{cpu_usage:.1f}%", "")
     hw_table.add_row("Platform", platform.system() + " " + platform.release(), "")
+    hw_table.add_row("Krystal Mode", f"[bold]{env_state.environment}[/]", "")
 
     console.print(hw_table)
     console.print()
+
+    if env_state.environment == "LITE":
+        console.print(
+            Panel(
+                "[bold yellow]Tu sistema se ha configurado automáticamente en LITE_MODE.[/]\n\n"
+                "[dim]Con el objetivo de ahorrar memoria RAM y garantizar estabilidad,\n"
+                "KrystalOS omitirá contenedores Docker pesados y optimizará el proxy.[/]",
+                title="[bold yellow]⚡ LITE MODE ACTIVATED[/]",
+                border_style="yellow",
+                box=box.ROUNDED,
+            )
+        )
+        console.print()
 
     # ------------------------------------------------------------------ #
     # 2. Software / PATH Diagnostics                                       #

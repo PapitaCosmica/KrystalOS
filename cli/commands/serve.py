@@ -12,11 +12,70 @@ import typer
 import uvicorn
 from rich.console import Console
 from rich.table import Table
+from rich.prompt import Confirm
+from pathlib import Path
+
+from core.schema import load_widget_manifest
+from cli.system_profiler import get_cached_env_state
+from shared.utils import ensure_krystal_project
 
 from cli.process_manager import PidManager, get_process_by_port, kill_process_by_port, kill_all_tracked
 
 console = Console()
 serve_app = typer.Typer(help="Manage KrystalOS gateway processes and start the server.")
+
+def check_widget_compatibility() -> None:
+    """
+    Simulates reading widget requirements before launching in Krystal serve.
+    Interrupts and prompts the user if they try to run a 'heavy' widget in a 'LITE' environment.
+    """
+    try:
+        project_root = ensure_krystal_project()
+    except FileNotFoundError:
+        return
+
+    env_state = get_cached_env_state()
+    if env_state.environment != "LITE":
+        return
+
+    widgets_dir = project_root / "widgets"
+    if not widgets_dir.exists():
+        return
+        
+    for widget_folder in widgets_dir.iterdir():
+        if not widget_folder.is_dir():
+            continue
+            
+        manifest_path = widget_folder / "krystal.json"
+        if not manifest_path.exists():
+            continue
+            
+        try:
+            widget = load_widget_manifest(str(manifest_path))
+            # Use getattr to safely check since Pydantic handles the alias 'class' -> 'widget_class'
+            is_heavy = getattr(widget, "widget_class", "standard") == "heavy"
+            
+            if is_heavy:
+                console.print(
+                    f"\n[bold yellow]\[!] ADVERTENCIA: El widget '{widget.name}' es \"Heavy-Class\"[/]\n"
+                    f"[yellow]y tu sistema está actualmente en [/][bold yellow]Modo Lite[/][yellow].[/]\n"
+                    f"[dim]Se recomienda usar la versión Lite del widget si existe o actualizar el hardware.[/]"
+                )
+                
+                # rich.prompt.Confirm
+                force = Confirm.ask(
+                    "[bold red]¿Deseas forzar la ejecución bajo tu propio riesgo?[/]", 
+                    default=False
+                )
+                
+                if not force:
+                    console.print("[dim]Operación abortada limpiamente.[/]")
+                    raise typer.Exit(code=0)
+                else:
+                    console.print("[bold red]⚠ Forzando ejecución de widget pesado. Puede haber lag...[/]")
+        except Exception:
+            pass
+
 
 @serve_app.command("start")
 def serve_start(
@@ -25,6 +84,9 @@ def serve_start(
     reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for widgets."),
 ) -> None:
     """Start the KrystalOS Core Gateway Server."""
+    # Profiler / Hardware Guard interception
+    check_widget_compatibility()
+
     # Process check
     if get_process_by_port(port):
         console.print(f"\n[bold red]ERROR:[/] Port {port} is already in use by another process.")
