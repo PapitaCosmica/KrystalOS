@@ -63,14 +63,22 @@ def make_mod(
     else:
         permissions = ["NETWORK_REST", "DB_READ_ONLY"]
 
+    # Target Environment
+    console.print("\n[yellow]¿Target Mode?[/] (LITE bloquea procesos intensivos)")
+    target_env = Prompt.ask("[bold]Target Environment[/]", choices=["LITE", "PRO"], default="LITE")
+
     mod_dir.mkdir(parents=True)
     
     import json
     manifest = {
         "name": clean_name,
         "version": "1.0.0",
+        "author": "krystal-dev",
+        "target": target_env,
         "scope": scope_id,
         "permissions": permissions,
+        "shared_tools": [],
+        "timeout_idle": "5m",
         "entrypoint": "main.py"
     }
     

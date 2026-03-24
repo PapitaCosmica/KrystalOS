@@ -31,6 +31,12 @@ Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_
 ### `krystal post <target>`
 *v2.2.2 Feature:* Packages your Widget, Mod, or Theme into a compressed `.kzip` for the ecosystem registry simulating an `npm publish`.
 
+### `krystal env:set <LITE|PRO>`
+*v2.2.3 Feature:* Forces the current Workspace's target profile. LITE enforces SQLite and resource ceilings; PRO unlocks Docker, PostgreSQL, and unlimited binaries.
+
+### `krystal init <name>`
+*v2.2.3 Feature:* Asks for LITE or PRO before scaffolding a new project and writes `target_env` into `krystal.config.json`.
+
 ### `krystal serve [COMMAND] [OPTIONS]`
 The core gateway orchestrator and process manager.
 - `krystal serve start [--port 8000]`: Boots up Uvicorn, launches the widget auto-discovery engine, and hosts the dashboard. Tracks PIDs.
@@ -103,6 +109,7 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 7 | Modular UI Compositor — hot-swappable themes and Layouts ✅ |
 | Phase 7.1 | The Krystal Lab — Zero-Config Standalone UI/Data Sandbox ✅ |
 | Phase 7.2 | Interactive CLI — Polyglot WASM Scaffolder & Package Manager ✅ |
+| Phase 7.3 | Environment Targeting — LITE/PRO Profiles, Dependency Registry & Hibernation ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**

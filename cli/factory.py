@@ -139,6 +139,10 @@ def scaffolding_wizard() -> None:
     h = IntPrompt.ask("[bold]Grid height[/] (1-12)", default=2)
     theme_color = Prompt.ask("[bold]Theme color[/] (hex)", default="#00FFCC").strip()
 
+    # Target Environment
+    console.print("\n[yellow]¿Target Mode?[/] (LITE bloquea WebSockets pesados para ahorrar RAM)")
+    target_env = Prompt.ask("[bold]Target Environment[/]", choices=["LITE", "PRO"], default="LITE")
+
     # Determine paths based on Krystal Context
     try:
         project_root = ensure_krystal_project()
@@ -184,19 +188,27 @@ def scaffolding_wizard() -> None:
         (ui_dir / "pyscript.html").write_text("<!DOCTYPE html>\n<html>\n<head>\n  <link rel=\"stylesheet\" href=\"https://pyscript.net/latest/pyscript.css\" />\n  <script defer src=\"https://pyscript.net/latest/pyscript.js\"></script>\n</head>\n<body>\n  <py-script>\n    print('[PyScript] Python Krystal loaded inside Browser.')\n  </py-script>\n</body>\n</html>\n")
 
     # 2. krystal.json
-    manifest = KrystalWidget(
-        name=name,
-        version="0.1.0",
-        author=author,
-        widget_class="standard",
-        runtime=Runtime(language=language, version="latest"),
-        ui=UI(grid_size=GridSize(w=w, h=h), icon="🔷", theme_color=theme_color),
-        capabilities=Capabilities(events_emitted=["test-event"]),
-        modes=Modes(native=True)
-    )
+    manifest = {
+        "name": name,
+        "version": "0.1.0",
+        "author": author,
+        "target": target_env,
+        "shared_tools": [],
+        "timeout_idle": "5m",
+        "runtime": {
+            "language": language,
+            "architecture": arch
+        },
+        "needs": [],
+        "ui": {
+            "grid_size": {"w": w, "h": h},
+            "icon": "🧩",
+            "theme_color": theme_color
+        }
+    }
 
     (widget_dir / "krystal.json").write_text(
-        json.dumps(manifest.model_dump(mode="json"), indent=2, ensure_ascii=False),
+        json.dumps(manifest, indent=2, ensure_ascii=False),
         encoding="utf-8"
     )
 

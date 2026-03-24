@@ -41,11 +41,25 @@ def cmd_init(
 ) -> None:
     """
     🏗  Scaffold a new KrystalOS project.
-
-    Creates the standard directory layout (cli/, core/, widgets/, shared/,
-    .krystal/) and a global [bold]krystal.config.json[/].
     """
     init_project(name)
+
+
+# ---------------------------------------------------------------------------
+# krystal env:set <target>
+# ---------------------------------------------------------------------------
+from cli.commands.init import set_env
+
+@app.command("env:set")
+def cmd_env_set(
+    target: str = typer.Argument(
+        ..., help="Forza el modo del Workspace actual (LITE o PRO)."
+    ),
+) -> None:
+    """
+    ⚙️  Force the KrystalOS Workspace Target Environment.
+    """
+    set_env(target)
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.tree import Tree
+from rich.prompt import Prompt
 
 console = Console()
 
@@ -61,9 +62,14 @@ def init_project(name: str) -> None:
         label = f"[dim cyan]{d}/[/]" if d.startswith(".") else f"[cyan]{d}/[/]"
         tree.add(label)
 
+    # Environment Consultant
+    console.print("\n[yellow]¿Este proyecto es para un entorno LITE (Recursos limitados, SQLite) o PRO (Alto rendimiento, PostgreSQL/Docker)?[/]")
+    env_choices = ["LITE", "PRO"]
+    env_ans = Prompt.ask("[bold cyan]Target Environment[/]", choices=env_choices, default="PRO")
+
     # krystal.config.json
     config_path = root / "krystal.config.json"
-    config_data = {**_DEFAULT_CONFIG, "name": name}
+    config_data = {**_DEFAULT_CONFIG, "name": name, "target_env": env_ans}
     config_path.write_text(json.dumps(config_data, indent=2), encoding="utf-8")
     tree.add("[bold yellow]krystal.config.json[/]")
 
@@ -76,12 +82,39 @@ def init_project(name: str) -> None:
     console.print(tree)
     console.print(
         Panel(
-            f"[bold green]✓[/] Project [bold]{name}[/] created at [dim]{root}[/]\n\n"
+            f"[bold green]✓[/] Project [bold]{name}[/] created at [dim]{root}[/]\n"
+            f"  [cyan]Target Env:[/] [bold]{env_ans}[/]\n\n"
             f"  [dim]Next steps:[/]\n"
             f"  [bold]cd {name}[/]\n"
-            f"  [bold]krystal make:widget[/]\n"
-            f"  [bold]krystal doctor[/]",
+            f"  [bold]krystal doctor[/] [dim](Recomendado para verificar dependencias {env_ans})[/]\n"
+            f"  [bold]krystal make:widget[/]",
             title="[bold cyan]🔷 Project Ready[/]",
             border_style="cyan",
         )
     )
+
+def set_env(target: str) -> None:
+    """Forces the workspace environment mode."""
+    target = target.upper()
+    if target not in ["LITE", "PRO"]:
+        console.print("[red]✗ El entorno debe ser 'LITE' o 'PRO'[/]")
+        raise typer.Exit(1)
+        
+    try:
+        from shared.utils import ensure_krystal_project
+        root = ensure_krystal_project()
+        config_path = root / "krystal.config.json"
+        
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        data["target_env"] = target
+        
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            
+        console.print(f"[bold green]✓ Workspace configurado forzosamente para:[/] [cyan]{target}[/]")
+    except Exception as e:
+        console.print(f"[red]✗ Error al cambiar entorno:[/] {e}")
+        raise typer.Exit(1)
+

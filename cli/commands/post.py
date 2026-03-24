@@ -37,6 +37,13 @@ def run_post(target_dir: str):
     console.print(f"Analizando entorno de {module_type} en: [cyan]{target.name}[/]")
     console.print("Ejecutando AST Validator (Silencioso)... [green]PASS[/]")
     
+    # ----------------------------------------------------
+    # RUN ENVIRONMENT LINTER (LITE vs PRO Constraints)
+    # ----------------------------------------------------
+    from cli.validators.post_analyzer import run_post_analyzer
+    if not run_post_analyzer(target):
+        return
+        
     # Compress into .kzip
     kzip_name = f"{target.name}.kzip"
     kzip_path = target.parent / kzip_name
