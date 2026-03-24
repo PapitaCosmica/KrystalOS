@@ -144,6 +144,11 @@ app.add_typer(bundle_app, name="bundle")
 app.add_typer(deploy_app, name="deploy")
 
 # ---------------------------------------------------------------------------
+# krystal make (Command Group)
+# ---------------------------------------------------------------------------
+from cli.commands.theme_scaffolder import theme_app
+app.add_typer(theme_app, name="make") 
+# ---------------------------------------------------------------------------
 # Entry-point
 # ---------------------------------------------------------------------------
 

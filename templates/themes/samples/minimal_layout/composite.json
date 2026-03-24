@@ -1,0 +1,7 @@
+{
+    "name": "Minimal Layout",
+    "version": "1.0.0",
+    "theme_type": "CORE_LAYOUT",
+    "priority_level": 90,
+    "defines_structure": true
+}

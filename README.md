@@ -21,6 +21,9 @@ Scaffold a new KrystalOS project directory.
 Interactive wizard to scaffold a new widget. 
 *v2.0.0-alpha Feature:* You can now generate standalone widgets with a built-in `krystal-mock.js` simulator to program in LiveServer anywhere in your filesystem.
 
+### `krystal make:theme`
+Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_SKIN`, `COLOR_PALETTE`, etc.) generating a strictly prioritized `composite.json`.
+
 ### `krystal deploy [PATH] [URL]`
 *v2.0.0-alpha Feature:* Absorbs your standalone widget into KrystalOS as `.kzip` after evaluating `ManifestValidator` and applying Optimization Heuristics, or directly launches it to GitHub if an URL is supplied.
 
@@ -93,6 +96,7 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 5 | Community — GitHub widget registry & Market ✅ |
 | Phase 6 | The Factory — standalone dev & K-ZIP absorber ✅ |
 | Phase 6.1 | Dependency Engine — Zero Data-Loss Auto-Migrator ✅ |
+| Phase 7 | Modular UI Compositor — hot-swappable themes and Layouts ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**

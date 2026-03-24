@@ -1,0 +1,15 @@
+/* KrystalOS Theme: Vaporwave Colors | Type: COLOR_PALETTE */
+
+:root {
+    --kos-primary: #ff71ce;
+    --kos-secondary: #01cdfe;
+    --kos-tertiary: #05ffa1;
+    --kos-bg-gradient: linear-gradient(135deg, #1f0259 0%, #2b0244 50%, #ff71ce 100%);
+    --kos-text-main: #b967ff;
+    --kos-text-dim: #fffb96;
+}
+
+body {
+    background: var(--kos-bg-gradient);
+    color: var(--kos-text-main);
+}

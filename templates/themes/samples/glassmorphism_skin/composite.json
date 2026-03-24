@@ -1,0 +1,7 @@
+{
+    "name": "Glassmorphism Skin",
+    "version": "1.0.0",
+    "theme_type": "WIDGET_SKIN",
+    "priority_level": 50,
+    "defines_structure": false
+}

@@ -12,9 +12,10 @@ export class SandboxManager {
      * @param {HTMLElement} container - The host element.
      * @param {string} htmlContent - The raw HTML of the widget.
      * @param {string} mode - 'open' or 'closed' (default 'closed' for max isolation).
+     * @param {CSSStyleSheet[]} customSheets - Arrays of constructed stylesheets (GlobalTokens, WidgetSkin).
      * @returns {ShadowRoot} The sandboxed root.
      */
-    static createShadowRealm(container, htmlContent, mode = 'closed') {
+    static createShadowRealm(container, htmlContent, mode = 'closed', customSheets = []) {
         // Enforce Shadow DOM to isolate styles and DOM queries
         const shadow = container.attachShadow({ mode });
         
@@ -24,13 +25,19 @@ export class SandboxManager {
         wrapper.innerHTML = htmlContent;
 
         // Common structural styles for the sandbox
-        const coreStyles = document.createElement('style');
-        coreStyles.textContent = `
+        const coreSheet = new CSSStyleSheet();
+        coreSheet.replaceSync(`
             :host { display: block; width: 100%; height: 100%; }
             .kos-widget-frame { width: 100%; height: 100%; box-sizing: border-box; }
-        `;
+        `);
 
-        shadow.appendChild(coreStyles);
+        // Apply constructed stylesheets for high-performance Modular Inheritence
+        try {
+            shadow.adoptedStyleSheets = [coreSheet, ...customSheets];
+        } catch (e) {
+            console.error("Browser does not support constructed stylesheets:", e);
+        }
+
         shadow.appendChild(wrapper);
 
         return shadow;
