@@ -17,7 +17,7 @@ from rich.prompt import Prompt
 console = Console()
 
 # Default top-level directories created for every new project
-_PROJECT_DIRS = ["cli", "core", "widgets", "shared", ".krystal"]
+_PROJECT_DIRS = ["cli", "core", "widgets", "shared", "static", "backups", ".krystal"]
 
 # Default global framework config
 _DEFAULT_CONFIG = {
@@ -72,6 +72,14 @@ def init_project(name: str) -> None:
     config_data = {**_DEFAULT_CONFIG, "name": name, "target_env": env_ans}
     config_path.write_text(json.dumps(config_data, indent=2), encoding="utf-8")
     tree.add("[bold yellow]krystal.config.json[/]")
+
+    # PATCH 1: Ensure /static and /backups exist with .gitkeep so git tracks them
+    for keep_dir, keep_file in [
+        (root / "static",           ".gitkeep"),
+        (root / "backups" / "archive", ".gitkeep"),
+    ]:
+        keep_dir.mkdir(parents=True, exist_ok=True)
+        (keep_dir / keep_file).touch()
 
     # .krystal/state.json (Phase 2/3 runtime state)
     (root / ".krystal" / "state.json").write_text(

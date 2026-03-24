@@ -65,7 +65,12 @@ app.add_middleware(MemoryOptimizationMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Serve Phase 3 Frontend bridge script
-app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
+# PATCH 1: Auto-create /static dir if missing to prevent RuntimeError on cold start
+_STATIC_DIR = PROJECT_ROOT / "static"
+_STATIC_DIR.mkdir(parents=True, exist_ok=True)
+if not (_STATIC_DIR / ".gitkeep").exists():
+    (_STATIC_DIR / ".gitkeep").touch()
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 @app.on_event("startup")
 async def on_startup() -> None:

@@ -68,23 +68,26 @@ def cmd_env_set(
 
 @app.command("make:widget")
 def cmd_make_widget(
-    test: bool = typer.Option(False, "--test", help="Generates an isolated UI/Events Lab for this Widget")
+    name: str = typer.Argument(None, help="Nombre del widget (opcional, interactivo si se omite)."),
+    test: bool = typer.Option(False, "--test", help="Genera un Krystal Lab aislado para este Widget."),
 ) -> None:
     """
     🧩  Interactive wizard to generate a new standalone widget.
-    
-    Prompts for architecture (MVC/Simple/AI), language, and generates 
+
+    Prompts for architecture (MVC/Simple/AI), language, and generates
     the autonomous standalone environment via The Factory.
-    If --test is passed, creates a Krystal Lab.
+    If --test is passed, creates a Krystal Lab (standalone mode, no project required).
     """
     if test:
         from cli.lab_engine import deploy_lab
-        # Assuming widget name is prompted inside scaffold, but for --test we might want to bypass or ask
-        name = typer.prompt("¿Cómo se llama tu Widget Lab?", default="my-widget-lab")
-        deploy_lab("widget", name.replace(" ", "-").lower())
+        # PATCH 2: Use pre-supplied name or ask interactively
+        lab_name = name if name else typer.prompt("¿Cómo se llama tu Widget Lab?", default="my-widget-lab")
+        deploy_lab("widget", lab_name.replace(" ", "-").lower())
         return
-        
-    scaffolding_wizard()
+
+    # PATCH 2: Pass pre-supplied name to wizard (or None for fully interactive)
+    from cli.commands.make_widget import make_widget
+    make_widget(name=name)
 
 # ---------------------------------------------------------------------------
 # krystal make:mod

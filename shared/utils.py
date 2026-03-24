@@ -39,20 +39,40 @@ def save_config(path: str | Path, data: dict[str, Any]) -> None:
     p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def ensure_krystal_project(cwd: Path | None = None) -> Path:
+def ensure_krystal_project(cwd: Path | None = None, strict: bool = True) -> Path:
     """
     Walk up from *cwd* to find a directory containing krystal.config.json.
 
+    Args:
+        cwd:    Starting directory (defaults to Path.cwd()).
+        strict: If True (default), raises FileNotFoundError when no project root
+                is found. If False (Standalone / --test mode), prints a warning
+                and returns Path.cwd() so commands work outside a KrystalOS project.
+
     Returns:
-        Path to the project root.
+        Path to the project root (or cwd in strict=False fallback).
 
     Raises:
-        FileNotFoundError: if no KrystalOS project root is found.
+        FileNotFoundError: Only if strict=True and no project root is found.
     """
+    import platform as _platform  # local import to keep module lightweight
     cwd = Path(cwd or Path.cwd())
     for candidate in [cwd, *cwd.parents]:
         if (candidate / "krystal.config.json").exists():
             return candidate
+
+    # PATCH 4: Standalone / non-strict mode — warn and use cwd instead of crashing.
+    if not strict:
+        try:
+            from rich.console import Console as _Console
+            _Console().print(
+                "[yellow]⚠  Ejecutando en modo Standalone fuera de un proyecto KrystalOS.[/]\n"
+                "   [dim]Usa `krystal init <nombre>` para crear un proyecto formal.[/]"
+            )
+        except ImportError:
+            print("⚠  Standalone mode — no krystal.config.json found. Using current directory.")
+        return Path.cwd()
+
     raise FileNotFoundError(
         "Not inside a KrystalOS project. Run `krystal init <name>` first."
     )
