@@ -194,6 +194,21 @@ def cmd_post(target: str = typer.Argument(..., help="Ruta del Widget, Mod o Them
 
 
 # ---------------------------------------------------------------------------
+# krystal remove <name>
+# ---------------------------------------------------------------------------
+from cli.commands.uninstaller import run_remove
+
+@app.command("remove")
+def cmd_remove(
+    name: str = typer.Argument(..., help="Nombre del Mod o Widget a desinstalar."),
+) -> None:
+    """
+    🗑  Safely remove a Mod with automatic .kss backup (SnapshotEngine).
+    """
+    run_remove(name)
+
+
+# ---------------------------------------------------------------------------
 # krystal make (Command Group)
 # ---------------------------------------------------------------------------
 from cli.commands.theme_scaffolder import theme_app
