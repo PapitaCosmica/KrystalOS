@@ -105,54 +105,57 @@ def _generate_mod_lab(mod_name: str) -> None:
     mod_dir  = lab_dir.parent
 
     # ── mock-database.js ─────────────────────────────────────────────────────
-    mock_db = """/**
- * KrystalOS Mini-OS Lab — mock-database.js
- * Simulates Krystal.db (SQLite/Postgres) using localStorage.
- * Auto-loaded by dashboard.html before the Mod's own JS.
- */
-(function() {
-  'use strict';
-  if (!window.Krystal) window.Krystal = {};
+    # NOTE: Written as a list of lines to avoid Python interpreting JS \u{} escapes.
+    mock_db_lines = [
+        "/**",
+        " * KrystalOS Mini-OS Lab \u2014 mock-database.js",
+        " * Simulates Krystal.db (SQLite/Postgres) using localStorage.",
+        " * Auto-loaded by dashboard.html before the Mod's own JS.",
+        " */",
+        "(function() {",
+        "  'use strict';",
+        "  if (!window.Krystal) window.Krystal = {};",
+        "",
+        "  window.Krystal.db = {",
+        "    save: async function(key, value) {",
+        "      await _delay();",
+        "      _checkError();",
+        "      localStorage.setItem('kos_mock_' + key, JSON.stringify(value));",
+        "      return { ok: true, key };",
+        "    },",
+        "    get: async function(key) {",
+        "      await _delay();",
+        "      _checkError();",
+        "      const raw = localStorage.getItem('kos_mock_' + key);",
+        "      return raw ? JSON.parse(raw) : null;",
+        "    },",
+        "    delete: async function(key) {",
+        "      await _delay();",
+        "      _checkError();",
+        "      localStorage.removeItem('kos_mock_' + key);",
+        "      return { ok: true };",
+        "    },",
+        "    list: async function() {",
+        "      await _delay();",
+        "      _checkError();",
+        "      const keys = Object.keys(localStorage).filter(k => k.startsWith('kos_mock_'));",
+        "      return keys.map(k => k.replace('kos_mock_', ''));",
+        "    }",
+        "  };",
+        "",
+        "  function _delay() {",
+        "    const ms = window.__kosLatency ? 2000 : 0;",
+        "    return new Promise(r => setTimeout(r, ms));",
+        "  }",
+        "  function _checkError() {",
+        "    if (window.__kosForceError) throw { code: 500, message: 'Forced HTTP 500 (stress simulator)' };",
+        "  }",
+        "",
+        "  console.log('[Krystal.db] \U0001f4be Mock Database Online (localStorage mode)');",
+        "})();",
+    ]
+    (lab_dir / "mock-database.js").write_text("\n".join(mock_db_lines), encoding="utf-8")
 
-  window.Krystal.db = {
-    save: async function(key, value) {
-      await _delay();
-      _checkError();
-      localStorage.setItem('kos_mock_' + key, JSON.stringify(value));
-      return { ok: true, key };
-    },
-    get: async function(key) {
-      await _delay();
-      _checkError();
-      const raw = localStorage.getItem('kos_mock_' + key);
-      return raw ? JSON.parse(raw) : null;
-    },
-    delete: async function(key) {
-      await _delay();
-      _checkError();
-      localStorage.removeItem('kos_mock_' + key);
-      return { ok: true };
-    },
-    list: async function() {
-      await _delay();
-      _checkError();
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('kos_mock_'));
-      return keys.map(k => k.replace('kos_mock_', ''));
-    }
-  };
-
-  function _delay() {
-    const ms = window.__kosLatency ? 2000 : 0;
-    return new Promise(r => setTimeout(r, ms));
-  }
-  function _checkError() {
-    if (window.__kosForceError) throw { code: 500, message: 'Forced HTTP 500 (stress simulator)' };
-  }
-
-  console.log('[Krystal.db] \u{1F4BE} Mock Database Online (localStorage mode)');
-})();
-"""
-    (lab_dir / "mock-database.js").write_text(mock_db, encoding="utf-8")
 
     # ── dashboard.html ───────────────────────────────────────────────────────
     dashboard_html = f"""<!DOCTYPE html>
