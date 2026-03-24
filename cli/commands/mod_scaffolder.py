@@ -4,6 +4,7 @@ Generates a Backend Mod or its isolated Lab testing environment.
 """
 
 import os
+from pathlib import Path
 import typer
 from rich.console import Console
 from rich.prompt import Prompt
@@ -22,7 +23,9 @@ def make_mod(
     If --test is passed, creates a Zero-Config UI dashboard (Swagger style) for testing.
     """
     console.print("\n[bold magenta]🧩 KrystalOS Mod Scaffolder[/]")
-    project_root = ensure_krystal_project()
+    # v2.2.6.4: True Standalone — no crash outside project
+    project_root = ensure_krystal_project(strict=False)
+    standalone = not (project_root / "krystal.config.json").exists()
 
     if not name:
         name = Prompt.ask("[cyan]¿Cómo se llama tu Mod?[/]", default="MOD-USERS")
@@ -34,7 +37,13 @@ def make_mod(
         return
 
     # Standard Generation
-    mod_dir = project_root / "mods" / clean_name
+    if standalone:
+        mod_dir = Path.cwd() / clean_name
+        console.print(
+            "[yellow]⚠[/]  Modo Standalone — generando Mod en [cyan]./{}[/]\n".format(clean_name)
+        )
+    else:
+        mod_dir = project_root / "mods" / clean_name
     if mod_dir.exists():
         console.print(f"[red]✗ El Mod ya existe:[/] {mod_dir}")
         raise typer.Exit(1)

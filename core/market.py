@@ -89,11 +89,22 @@ def install_from_git(repo_url: str, dest_name: str | None = None) -> tuple[bool,
     widgets_dir = project_root / "widgets"
     widgets_dir.mkdir(exist_ok=True)
     
-    # Extract name from URL if not provided
+    # --- URL Normalization (Short Name -> GitHub URL) ---
+    original_input = repo_url
+    if not repo_url.startswith("http") and not repo_url.startswith("git@"):
+        # Auto-expand to official PapitaCosmica registry if only a short name is given
+        repo_url = f"https://github.com/PapitaCosmica/WidgetKOs-{repo_url}.git"
+    
+    # --- Extract clean folder name ---
     if not dest_name:
-        dest_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
+        # e.g https://github.com/.../WidgetKOs-mi-widget.git -> WidgetKOs-mi-widget
+        raw_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
         # Remove ecosystem prefixes for clean local folder
-        dest_name = dest_name.replace("WidgetKOS-", "").replace("TemaKOS-", "").replace("ModKOS-", "")
+        dest_name = raw_name.replace("WidgetKOs-", "").replace("ThemeKOs-", "").replace("ModKOs-", "")
+        
+        # Fallback si el usuario no usó el prefijo en la URL custom
+        if not dest_name:
+            dest_name = raw_name
 
     target_dir = widgets_dir / dest_name
 

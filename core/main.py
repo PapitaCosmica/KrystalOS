@@ -66,11 +66,16 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Serve Phase 3 Frontend bridge script
 # PATCH 1: Auto-create /static dir if missing to prevent RuntimeError on cold start
-_STATIC_DIR = PROJECT_ROOT / "static"
-_STATIC_DIR.mkdir(parents=True, exist_ok=True)
-if not (_STATIC_DIR / ".gitkeep").exists():
-    (_STATIC_DIR / ".gitkeep").touch()
-app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+_PROJECT_STATIC_DIR = PROJECT_ROOT / "static"
+_PROJECT_STATIC_DIR.mkdir(parents=True, exist_ok=True)
+if not (_PROJECT_STATIC_DIR / ".gitkeep").exists():
+    (_PROJECT_STATIC_DIR / ".gitkeep").touch()
+
+# KrystalOS internal static files (krystal-bridge.js, styles.css)
+_SYS_STATIC_DIR = Path(__file__).parent.parent / "static"
+
+app.mount("/sys-static", StaticFiles(directory=str(_SYS_STATIC_DIR)), name="sys_static")
+app.mount("/static", StaticFiles(directory=str(_PROJECT_STATIC_DIR)), name="user_static")
 
 @app.on_event("startup")
 async def on_startup() -> None:

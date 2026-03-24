@@ -75,8 +75,17 @@ _STARTERS: dict[str, tuple[str, str]] = {
 }
 
 
-def _ui_html(widget_name: str, theme_color: str) -> str:
-    """Generate a Tailwind Glassmorphism base ui.html for the widget."""
+def _ui_html(widget_name: str, theme_color: str, css_framework: str = "No (Default)") -> str:
+    """Generate a base ui.html for the widget."""
+    
+    css_injection = ""
+    if css_framework == "Tailwind":
+        css_injection = '<script src="https://cdn.tailwindcss.com"></script>\n          <style>\n            :root { --accent: {theme_color}; }\n          </style>'
+    elif css_framework == "Bootstrap":
+        css_injection = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n          <style>\n            :root { --accent: {theme_color}; }\n          </style>'
+    else:
+        css_injection = '<style>\n            :root { --accent: {theme_color}; --kos-accent: {theme_color}; }\n          </style>'
+
     return dedent(f"""\
         <!DOCTYPE html>
         <html lang="en">
@@ -84,9 +93,8 @@ def _ui_html(widget_name: str, theme_color: str) -> str:
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>{widget_name} — KrystalOS Widget</title>
-          <script src="https://cdn.tailwindcss.com"></script>
+          {css_injection}
           <style>
-            :root {{ --accent: {theme_color}; }}
             body {{
               background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
               min-height: 100vh;
@@ -134,18 +142,29 @@ def _ui_html(widget_name: str, theme_color: str) -> str:
     """)
 
 
-def make_widget(name: str | None = None) -> None:
+def make_widget(name: str | None = None, test: bool = False) -> None:
     """Interactive wizard to create a new KrystalOS widget.
     
-    PATCH 2: Accepts an optional pre-supplied name to skip the name prompt.
+    PATCH 2/4: Accepts an optional pre-supplied name and test flag.
     Usage: krystal make:widget           → fully interactive
            krystal make:widget MyWidget  → skips name question
+           krystal make:widget --test    → interactive + generates lab-env
     """
 
-    console.print("\n[bold cyan]🔷 KrystalOS[/] — Widget Generator\n")
+    console.print("\n[bold cyan]🔷 KrystalOS[/] — Widget Generator")
+
+    # --- Pre-Diagnostics (Doctor Auto-Check) ---
+    import psutil
+    ram_gb = psutil.virtual_memory().total / (1024 ** 3)
+    console.print(f"[dim]Diagnostic: RAM detectada {ram_gb:.1f} GB[/]")
+    if ram_gb < 4.0:
+        console.print(
+            "  [yellow]⚠ Memoria menor a 4 GB. Se recomienda encarecidamente utilizar el entorno LITE (SQLite/Local).[/]\n"
+        )
+    else:
+        console.print("  [green]✓ Recursos de hardware óptimos (PRO mode soportado).[/]\n")
 
     # --- Gather input ---
-    # PATCH 2: Use the pre-supplied name if provided, otherwise ask interactively.
     if name:
         name = name.strip().lower().replace(" ", "-")
         console.print(f"[dim]Nombre del widget: [cyan]{name}[/][/]")
@@ -153,21 +172,45 @@ def make_widget(name: str | None = None) -> None:
         name = Prompt.ask("[bold]Widget name[/] (kebab-case)").strip().lower().replace(" ", "-")
     author = Prompt.ask("[bold]Author[/]").strip()
 
+    target_env = Prompt.ask(
+        "[bold]Target Environment[/] (LITE / PRO)",
+        choices=["LITE", "PRO"],
+        default="LITE" if ram_gb < 4.0 else "PRO"
+    )
+
     lang_choices = "/".join(e.value for e in SupportedLanguage)
     language = Prompt.ask(
         f"[bold]Language[/] ({lang_choices})",
         choices=[e.value for e in SupportedLanguage],
         default="python",
     )
+    
+    php_arch = "Pure"
+    if language == "php":
+        php_arch = Prompt.ask(
+            "[bold]Arquitectura PHP[/] (Pure / MVC)",
+            choices=["Pure", "MVC"],
+            default="Pure"
+        )
+
     lang_version = Prompt.ask(
         f"[bold]Runtime version[/] (e.g. 3.11, 8.2)",
-        default="3.11",
+        default="3.11" if language == "python" else ("8.2" if language == "php" else "latest"),
     ).strip()
+    
+    css_framework = Prompt.ask(
+        "[bold]Framework CSS o Estilo Propio[/] (No (Default) / Tailwind / Bootstrap)",
+        choices=["No (Default)", "Tailwind", "Bootstrap"],
+        default="No (Default)",
+        show_choices=True
+    )
+
     w = IntPrompt.ask("[bold]Grid width[/]  (columns, 1-12)", default=2)
     h = IntPrompt.ask("[bold]Grid height[/] (rows,    1-12)", default=2)
     theme_color = Prompt.ask("[bold]Theme color[/] (hex)", default="#7C3AED").strip()
 
     # --- Validate via Pydantic ---
+    is_docker = (target_env == "PRO")
     try:
         manifest = KrystalWidget(
             name=name,
@@ -176,23 +219,26 @@ def make_widget(name: str | None = None) -> None:
             runtime=Runtime(language=language, version=lang_version),
             ui=UI(grid_size=GridSize(w=w, h=h), icon="🔷", theme_color=theme_color),
             capabilities=Capabilities(),
-            modes=Modes(native=True, docker=False),
+            modes=Modes(native=True, docker=is_docker),
+
         )
     except Exception as exc:
         console.print(f"[bold red]✗ Validation error:[/] {exc}")
         raise typer.Exit(code=1)
 
-    # --- Resolve project root ---
-    try:
-        project_root = ensure_krystal_project()
-    except FileNotFoundError:
-        # Fall back to cwd if not inside a project (useful during development)
-        project_root = Path.cwd()
-        console.print(
-            "[yellow]⚠[/]  No krystal.config.json found — writing widget to current directory.\n"
-        )
+    # --- Resolve project root (v2.2.6.4: True Standalone) ---
+    project_root = ensure_krystal_project(strict=False)
+    standalone = not (project_root / "krystal.config.json").exists()
 
-    widget_dir = project_root / "widgets" / name
+    if standalone:
+        # Standalone: write directly to ./name/ — no /widgets/ subfolder
+        widget_dir = Path.cwd() / name
+        console.print(
+            "[yellow]⚠[/]  Modo Standalone — generando widget en [cyan]./{}[/]\n".format(name)
+        )
+    else:
+        widget_dir = project_root / "widgets" / name
+
     if widget_dir.exists():
         console.print(f"[bold red]✗[/] Widget [yellow]{name}[/] already exists at {widget_dir}")
         raise typer.Exit(code=1)
@@ -200,21 +246,40 @@ def make_widget(name: str | None = None) -> None:
     widget_dir.mkdir(parents=True)
 
     # krystal.json
+    # Modify manifest slightly to store architecture if PHP
+    json_data = manifest.to_krystal_json()
+    if language == "php":
+        json_data["architecture"] = php_arch
+        
     (widget_dir / "krystal.json").write_text(
-        json.dumps(manifest.to_krystal_json(), indent=2, ensure_ascii=False),
+        json.dumps(json_data, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
-    # Language starter file
+    # Language starter file / Architecture routing
     filename, template = _STARTERS.get(language, ("index.txt", "# {name}"))
-    (widget_dir / filename).write_text(
-        template.format(name=name, lang_version=lang_version),
-        encoding="utf-8",
-    )
+    
+    if language == "php" and php_arch == "MVC":
+        # Generate MVC Scaffold
+        (widget_dir / "controllers").mkdir()
+        (widget_dir / "models").mkdir()
+        (widget_dir / "views").mkdir()
+        
+        (widget_dir / "controllers" / "WidgetController.php").write_text("<?php\n// Controller Logic\n", encoding="utf-8")
+        (widget_dir / "models" / "DataModel.php").write_text("<?php\n// Data Models\n", encoding="utf-8")
+        (widget_dir / "views" / filename).write_text(template.format(name=name, lang_version=lang_version), encoding="utf-8")
+        
+        filename = "views/" + filename # For the summary
+    else:
+        # Pure PHP or other languages (Flat)
+        (widget_dir / filename).write_text(
+            template.format(name=name, lang_version=lang_version),
+            encoding="utf-8",
+        )
 
-    # ui.html (Tailwind Glassmorphism)
+    # ui.html (Injected with CSS Framework options)
     (widget_dir / "ui.html").write_text(
-        _ui_html(name, theme_color),
+        _ui_html(name, theme_color, css_framework),
         encoding="utf-8",
     )
 
@@ -235,7 +300,11 @@ def make_widget(name: str | None = None) -> None:
     table.add_column(style="dim")
     table.add_column(style="bold white")
     table.add_row("Name", name)
+    table.add_row("Target", target_env)
+    if language == "php":
+        table.add_row("Architecture", php_arch)
     table.add_row("Language", f"{language} {lang_version}")
+    table.add_row("CSS Style", css_framework)
     table.add_row("Grid", f"{w}×{h}")
     table.add_row("Color", theme_color)
     table.add_row("Path", str(widget_dir))
@@ -253,3 +322,92 @@ def make_widget(name: str | None = None) -> None:
         f"  [green]•[/] {filename}\n"
         f"  [green]•[/] ui.html{readme_str}\n"
     )
+
+    if test:
+        _generate_widget_lab(name, widget_dir, theme_color)
+
+
+def _generate_widget_lab(widget_name: str, widget_dir: Path, theme_color: str) -> None:
+    """Generate a Mini-OS Lab (lab-env/) for testing a Widget standalone."""
+    from rich.prompt import Confirm
+    import subprocess
+    import webbrowser
+
+    lab_dir = widget_dir / "lab-env"
+    lab_dir.mkdir(parents=True, exist_ok=True)
+
+    # Fake JS container to bootstrap the widget
+    runner_html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KrystalOS — {widget_name} Lab</title>
+  <style>
+    *{{box-sizing:border-box;margin:0;padding:0;}}
+    body{{background:#0f0c29;color:white;font-family:system-ui,sans-serif;height:100vh;display:grid;place-items:center;}}
+    .kos-desktop{{width:100%;height:100%;padding:40px;display:flex;align-items:flex-start;justify-content:center;}}
+    .widget-container{{
+      width: 320px;
+      min-height: 240px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }}
+    .widget-header{{
+      height: 40px;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 12px;
+      font-weight: 600;
+      color: {theme_color};
+    }}
+    .widget-body{{flex: 1; position: relative;}}
+    .widget-body iframe {{width:100%; height:100%; border:none;}}
+  </style>
+</head>
+<body>
+  <div class="kos-desktop">
+    <div class="widget-container">
+      <div class="widget-header">
+        🧩 {widget_name} (Mini-OS Debugger)
+      </div>
+      <div class="widget-body">
+         <iframe src="../ui.html"></iframe>
+      </div>
+    </div>
+  </div>
+  <script>
+    console.log("[KrystalOS] 🧪 Autoloading Widget Lab...");
+    // Mock KrystalOS API
+    window.Krystal = {{
+      db: {{ get: async() => null, save: async() => true }},
+      ipc: {{ send: (c, p) => console.log('IPC Out', c, p) }}
+    }};
+  </script>
+</body>
+</html>
+    """
+    (lab_dir / "index.html").write_text(runner_html, encoding="utf-8")
+
+    console.print(
+        Panel(
+            f"[green]✓ Widget Lab generado en:[/] [cyan]{lab_dir}[/]\n"
+            f"  • [yellow]index.html[/] — Sandbox Wrapper (Renderiza tu ui.html e inyecta API Mock)",
+            title="🧪 Widget Lab listo",
+            border_style="magenta",
+        )
+    )
+
+    if Confirm.ask("🧪 ¿Deseas iniciar el dev server para visualizar tu Widget ahora?", default=False):
+        console.print(f"[cyan]Sirviendo en http://localhost:8080/lab-env/index.html ...[/]")
+        webbrowser.open("http://localhost:8080/lab-env/index.html")
+        subprocess.run(["python", "-m", "http.server", "8080", "--directory", str(widget_dir)])
+

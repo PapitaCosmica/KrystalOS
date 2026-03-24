@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KrystalOS 🔷 Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/static/krystal-bridge.js"></script>
-  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/sys-static/krystal-bridge.js"></script>
+  <link rel="stylesheet" href="/sys-static/styles.css">
   <style>
     :root {
       {% for key, val in theme_vars.items() %}
@@ -145,7 +145,7 @@
           // Global static styles link
           const link = document.createElement("link");
           link.rel = "stylesheet";
-          link.href = "/static/styles.css";
+          link.href = "/sys-static/styles.css";
 
           // Isolate widget styles/scripts using Shadow DOM (Open mode for Event Bus access)
           const shadow = slot.attachShadow({ mode: 'open' });

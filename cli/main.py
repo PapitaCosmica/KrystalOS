@@ -78,16 +78,10 @@ def cmd_make_widget(
     the autonomous standalone environment via The Factory.
     If --test is passed, creates a Krystal Lab (standalone mode, no project required).
     """
-    if test:
-        from cli.lab_engine import deploy_lab
-        # PATCH 2: Use pre-supplied name or ask interactively
-        lab_name = name if name else typer.prompt("¿Cómo se llama tu Widget Lab?", default="my-widget-lab")
-        deploy_lab("widget", lab_name.replace(" ", "-").lower())
-        return
-
-    # PATCH 2: Pass pre-supplied name to wizard (or None for fully interactive)
+    # PATCH 3: Route directly to make_widget so the interactive wizard always runs,
+    # and pass the test flag so it generates the lab-env AFTER scaffolding the widget.
     from cli.commands.make_widget import make_widget
-    make_widget(name=name)
+    make_widget(name=name, test=test)
 
 # ---------------------------------------------------------------------------
 # krystal make:mod
@@ -189,11 +183,14 @@ app.add_typer(deploy_app, name="deploy")
 from cli.commands.post import run_post
 
 @app.command("post")
-def cmd_post(target: str = typer.Argument(..., help="Ruta del Widget, Mod o Theme a empaquetar en .kzip")):
+def cmd_post(
+    target: str = typer.Argument(..., help="Ruta del Widget, Mod o Theme a empaquetar en .kzip"),
+    github_url: str = typer.Argument(None, help="Si se incluye, sube automáticamente todo al repositorio GitHub especificado")
+):
     """
     📦  Package and publish a specific module to the KrystalOS Registry (.kzip)
     """
-    run_post(target)
+    run_post(target, github_url)
 
 
 # ---------------------------------------------------------------------------

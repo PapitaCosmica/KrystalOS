@@ -42,7 +42,9 @@ def make_theme(
         return
 
     console.print("\n[bold magenta]🎨 KrystalOS Theme Scaffolder[/]")
-    project_root = ensure_krystal_project()
+    # v2.2.6.4: True Standalone — no crash outside project
+    project_root = ensure_krystal_project(strict=False)
+    standalone = not (project_root / "krystal.config.json").exists()
 
     if not name:
         name = Prompt.ask("[cyan]¿Cómo se llama tu tema modular?[/]", default="mi-tema-genial")
@@ -62,7 +64,13 @@ def make_theme(
     type = type.upper()
 
     clean_name = name.lower().replace(" ", "-")
-    theme_dir = project_root / "themes" / clean_name
+    if standalone:
+        theme_dir = Path.cwd() / clean_name
+        console.print(
+            "[yellow]⚠[/]  Modo Standalone — generando Tema en [cyan]./{}[/]\n".format(clean_name)
+        )
+    else:
+        theme_dir = project_root / "themes" / clean_name
 
     if theme_dir.exists():
         console.print(f"[red]✗ El directorio ya existe:[/] {theme_dir}")

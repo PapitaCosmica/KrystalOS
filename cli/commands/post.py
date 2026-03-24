@@ -16,9 +16,10 @@ console = Console()
 _EXCLUDED_DIRS: set[str] = {"lab-env"}
 
 
-def run_post(target_dir: str) -> None:
+def run_post(target_dir: str, github_url: str | None = None) -> None:
     """
-    Validates a target module and packs it into a .kzip.
+    Validates a target module, packs it into a .kzip, and optionally autobuilds and pushes
+    everything to a GitHub Krystal Registry repository.
     Excludes /lab-env/ so Mini-OS Test Labs are never shipped to the registry.
     """
     console.print(f"\n[bold magenta]📦 KrystalOS Package Manager[/]")
@@ -78,4 +79,59 @@ def run_post(target_dir: str) -> None:
         f"  [dim]Archivos incluidos:[/]  [cyan]{files_included}[/]   "
         f"[dim]Excluidos (lab-env/):[/] [yellow]{files_skipped}[/]"
     )
-    console.print("[dim]Use `krystal post <ruta>` para simular subida a Krystal Registry.[/]")
+
+    if github_url:
+        import subprocess
+        assert isinstance(github_url, str)
+        
+        console.print(f"\n[bold cyan]🚀 Desplegando en GitHub (Krystal Registry)...[/]")
+        console.print(f"[dim]Destino: {github_url}[/]")
+        
+        # Validar sugerencia de nomenclatura
+        if "WidgetKOs-" not in github_url and "ModKOs-" not in github_url and "ThemeKOs-" not in github_url:
+            console.print("[yellow]⚠ Advertencia: El repositorio no usa la nomenclatura oficial recomendada (ej. WidgetKOs-nombre). Esto podría afectar `krystal install` por nombre corto.[/]")
+
+        # Mover temporalmente el .kzip adentro para subirlo al repo
+        target_kzip = target / kzip_name
+        kzip_path.rename(target_kzip)
+
+        try:
+            # Crear un .gitignore al vuelo para que no suba lab-env ni otros artifacts
+            gitignore_path = target / ".gitignore"
+            if not gitignore_path.exists():
+                gitignore_path.write_text("lab-env/\n.krystal/\n__pycache__/\n*.pyc\n", encoding="utf-8")
+
+            # Inicializar y subir con Git
+            subprocess.run(["git", "init"], cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["git", "add", "."], cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Commit (puede fallar si no hay cambios nuevos en el git local)
+            subprocess.run(["git", "commit", "-m", "🚀 KrystalOS Auto-Publish (krystal post)"], cwd=target, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            subprocess.run(["git", "branch", "-M", "main"], cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Manejar remote origen si ya existe o crearlo
+            res = subprocess.run(["git", "remote", "get-url", "origin"], cwd=target, capture_output=True, text=True)
+            if res.returncode != 0:
+                subprocess.run(["git", "remote", "add", "origin", github_url], cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(["git", "remote", "set-url", "origin", github_url], cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Push interactivo para ver progreso
+            console.print("[bold cyan]Subiendo archivos a GitHub...[/]")
+            subprocess.run(["git", "push", "-u", "origin", "main", "--force"], cwd=target, check=True)
+            
+            console.print(f"\n[bold green]✓ ¡Publicado exitosamente en GitHub![/]")
+            console.print(f"Los usuarios pueden instalarlo ejecutando:")
+            console.print(f"  [cyan]krystal install -w {target.name}[/]")
+            
+        except subprocess.CalledProcessError as e:
+            console.print(f"[bold red]✗ Falló el despliegue Git:[/] {e}")
+            console.print("[yellow]Asegúrate de tener `git` instalado y los permisos SSH/HTTPS configurados.[/]")
+        finally:
+            # Restaurar el .kzip a la carpeta padre para no romper flujos locales
+            target_kzip.rename(kzip_path)
+            
+    else:
+        console.print("[dim]Use `krystal post <ruta> <url_github>` para automatizar la subida a Krystal Registry.[/]")
+
