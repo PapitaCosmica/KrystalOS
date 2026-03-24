@@ -41,11 +41,20 @@ def deploy_lab(lab_type: str, project_name: str) -> None:
         # Fallback if templates are missing from OS
         console.print(f"[dim]Warning: Plantillas nativas de {lab_type} no encontradas. Generando minimal...[/]")
         
-    # Copy shared Performance Profiler
+    # Copy shared Performance Profiler + HMR Client
     if shared_dir.exists():
-        profiler = shared_dir / "profiler.js"
-        if profiler.exists():
-            shutil.copy2(profiler, lab_dir / "profiler.js")
+        for shared_file in ["profiler.js", "hmr-client.js"]:
+            src = shared_dir / shared_file
+            if src.exists():
+                shutil.copy2(src, lab_dir / shared_file)
+
+    # Inject hmr-client.js <script> into every HTML file in the lab
+    hmr_tag = '<script src="./hmr-client.js"></script>\n'
+    for html_file in lab_dir.glob("*.html"):
+        content = html_file.read_text(encoding="utf-8")
+        if "hmr-client.js" not in content:
+            content = content.replace("</body>", f"  {hmr_tag}</body>")
+            html_file.write_text(content, encoding="utf-8")
 
     console.print(f"\n[bold green]🧪 {lab_type.upper()} LAB INICIALIZADO EN:[/] {lab_dir}")
     console.print(f"[dim]Abre index o dashboard HTML en tu navegador (LiveServer recomendado para fetch).[/]")

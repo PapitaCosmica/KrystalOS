@@ -194,7 +194,10 @@ def scaffolding_wizard() -> None:
         "author": author,
         "target": target_env,
         "shared_tools": [],
+        "isolated_tools": [],
         "timeout_idle": "5m",
+        "execution_mode": "worker" if language == "cpp" else "main",
+        "worker_file": "logic.worker.js" if language in ["cpp", "js"] else None,
         "runtime": {
             "language": language,
             "architecture": arch

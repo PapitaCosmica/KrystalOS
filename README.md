@@ -37,6 +37,9 @@ Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_
 ### `krystal init <name>`
 *v2.2.3 Feature:* Asks for LITE or PRO before scaffolding a new project and writes `target_env` into `krystal.config.json`.
 
+### `krystal dev-server --lab <path>`
+*v2.2.4 Feature:* Starts a WebSocket HMR (Hot Module Replacement) dev server for a Lab folder. CSS/HTML changes are injected surgically into Shadow DOM without refresh. JS/WASM changes restart only the relevant Web Worker.
+
 ### `krystal serve [COMMAND] [OPTIONS]`
 The core gateway orchestrator and process manager.
 - `krystal serve start [--port 8000]`: Boots up Uvicorn, launches the widget auto-discovery engine, and hosts the dashboard. Tracks PIDs.
@@ -110,6 +113,7 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 7.1 | The Krystal Lab — Zero-Config Standalone UI/Data Sandbox ✅ |
 | Phase 7.2 | Interactive CLI — Polyglot WASM Scaffolder & Package Manager ✅ |
 | Phase 7.3 | Environment Targeting — LITE/PRO Profiles, Dependency Registry & Hibernation ✅ |
+| Phase 7.4 | Fluid UI & Off-Main-Thread — GridManager, ThreadBridge (Web Workers) & HMR ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**
