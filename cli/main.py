@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 
 from cli.commands.init import init_project
-from cli.commands.make_widget import make_widget
+from cli.factory import scaffolding_wizard
 from cli.commands.doctor import run_doctor
 from cli.commands.dev_guide import show_dev_guide
 from cli.commands.install import install_widget, update_widget
@@ -55,13 +55,12 @@ def cmd_init(
 @app.command("make:widget")
 def cmd_make_widget() -> None:
     """
-    🧩  Interactive wizard to generate a new widget.
-
-    Prompts for name, language, version and grid size, then scaffolds the
-    widget folder with a validated [bold]krystal.json[/], a language
-    starter file, and a Tailwind Glassmorphism [bold]ui.html[/].
+    🧩  Interactive wizard to generate a new standalone widget.
+    
+    Prompts for architecture (MVC/Simple/AI), language, and generates 
+    the autonomous standalone environment via The Factory.
     """
-    make_widget()
+    scaffolding_wizard()
 
 
 # ---------------------------------------------------------------------------

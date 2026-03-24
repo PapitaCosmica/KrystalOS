@@ -18,7 +18,11 @@ Scaffold a new KrystalOS project directory.
 - `[NAME]`: Project directory name (default: `my_krystal_project`).
 
 ### `krystal make:widget`
-Interactive wizard to scaffold a new widget. Generates `krystal.json` and basic language-specific scaffolding inside the `widgets/` folder.
+Interactive wizard to scaffold a new widget. 
+*v2.0.0-alpha Feature:* You can now generate standalone widgets with a built-in `krystal-mock.js` simulator to program in LiveServer anywhere in your filesystem.
+
+### `krystal deploy [PATH] [URL]`
+*v2.0.0-alpha Feature:* Absorbs your standalone widget into KrystalOS as `.kzip` after evaluating `ManifestValidator` and applying Optimization Heuristics, or directly launches it to GitHub if an URL is supplied.
 
 ### `krystal serve [COMMAND] [OPTIONS]`
 The core gateway orchestrator and process manager.
@@ -87,6 +91,8 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 3 | Event Bus — WebSocket EventManager ✅ |
 | Phase 4 | Lite Mode & Bundler — portable binary bundles ✅ |
 | Phase 5 | Community — GitHub widget registry & Market ✅ |
+| Phase 6 | The Factory — standalone dev & K-ZIP absorber ✅ |
+| Phase 6.1 | Dependency Engine — Zero Data-Loss Auto-Migrator ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**

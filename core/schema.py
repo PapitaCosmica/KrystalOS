@@ -119,6 +119,9 @@ class KrystalWidget(BaseModel):
     # Profiling (v1.1.0-beta)
     widget_class: str = Field(default="standard", alias="class", description="standard or heavy")
 
+    # Dependencies (v2.0.0-alpha)
+    needs: list[str] = Field(default_factory=list, description="Required Krystal Mods or Packages")
+
     def to_krystal_json(self) -> dict:
         """Export back to a krystal.json-compatible dict."""
         return self.model_dump(mode="json")

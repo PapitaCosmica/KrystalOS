@@ -1,0 +1,3 @@
+"""
+KrystalOS Middleware Package
+"""
