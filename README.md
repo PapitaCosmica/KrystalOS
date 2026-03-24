@@ -22,10 +22,14 @@ Interactive wizard to scaffold a new widget.
 *v2.0.0-alpha Feature:* You can now generate standalone widgets with a built-in `krystal-mock.js` simulator to program in LiveServer anywhere in your filesystem.
 
 ### `krystal make:theme`
-Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_SKIN`, `COLOR_PALETTE`, etc.) generating a strictly prioritized `composite.json`.
+Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_SKIN`, `COLOR_PALETTE`, etc.) generating a strictly prioritized `composite.json`. 
+*v2.2.2 Feature:* Polyglot scaffolding support for pure CSS, Tailwind, or Bootstrap.
 
-### `krystal deploy [PATH] [URL]`
-*v2.0.0-alpha Feature:* Absorbs your standalone widget into KrystalOS as `.kzip` after evaluating `ManifestValidator` and applying Optimization Heuristics, or directly launches it to GitHub if an URL is supplied.
+### `krystal deploy`
+*v2.2.2 Feature:* Orchestrates the entire KrystalOS infrastructure into a Production-ready Docker Compose environment.
+
+### `krystal post <target>`
+*v2.2.2 Feature:* Packages your Widget, Mod, or Theme into a compressed `.kzip` for the ecosystem registry simulating an `npm publish`.
 
 ### `krystal serve [COMMAND] [OPTIONS]`
 The core gateway orchestrator and process manager.
@@ -97,6 +101,8 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 6 | The Factory — standalone dev & K-ZIP absorber ✅ |
 | Phase 6.1 | Dependency Engine — Zero Data-Loss Auto-Migrator ✅ |
 | Phase 7 | Modular UI Compositor — hot-swappable themes and Layouts ✅ |
+| Phase 7.1 | The Krystal Lab — Zero-Config Standalone UI/Data Sandbox ✅ |
+| Phase 7.2 | Interactive CLI — Polyglot WASM Scaffolder & Package Manager ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**

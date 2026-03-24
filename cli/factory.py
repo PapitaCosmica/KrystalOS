@@ -112,12 +112,21 @@ def scaffolding_wizard() -> None:
     name = Prompt.ask("[bold]Widget name[/] (kebab-case)").strip().lower().replace(" ", "-")
     author = Prompt.ask("[bold]Author[/]", default="KOS Developer").strip()
 
-    lang_choices = ["python", "php", "js", "node"]
-    language = Prompt.ask(
-        "[bold]Language[/] (python/php/js/node)",
-        choices=lang_choices,
-        default="python"
-    )
+    console.print("\n[yellow]¿Qué lenguaje principal usarás para la lógica del Widget?[/]")
+    langs = ["JavaScript/TypeScript", "Python (PyScript/FastAPI)", "C++ (WebAssembly)", "C# (.NET Microservice)", "Java (Spring/Microservice)"]
+    for idx, lOpt in enumerate(langs):
+        console.print(f"  [cyan]{idx+1}. {lOpt}[/]")
+    l_choice = Prompt.ask("[yellow]Elige (1-5)[/]", default="1")
+    try:
+        lang_choice = langs[int(l_choice) - 1]
+    except:
+        lang_choice = "JavaScript/TypeScript"
+
+    language = "js"
+    if "Python" in lang_choice: language = "python"
+    elif "C++" in lang_choice: language = "cpp"
+    elif "C#" in lang_choice: language = "csharp"
+    elif "Java" in lang_choice: language = "java"
 
     architectures = ["Simple", "MVC (Folders)", "AI-Ready"]
     arch = Prompt.ask(
@@ -153,11 +162,26 @@ def scaffolding_wizard() -> None:
     if arch == "MVC (Folders)":
         logic_dir = widget_dir / "logic"
         logic_dir.mkdir()
-        (logic_dir / f"Controller.{'py' if language=='python' else 'php'}").write_text("// Controller Logic here")
+        (logic_dir / f"Controller.{'py' if language=='python' else 'js'}").write_text("// Controller Logic here")
     elif arch == "AI-Ready":
         ai_dir = widget_dir / "models"
         ai_dir.mkdir()
         (ai_dir / "prompt.txt").write_text("System prompt goes here...")
+
+    # Polyglot Scaffolding
+    if language == "cpp":
+        (widget_dir / "main.cpp").write_text("#include <emscripten/emscripten.h>\n#include <iostream>\n\nextern \"C\" {\n    EMSCRIPTEN_KEEPALIVE\n    void krystal_init() {\n        std::cout << \"[WASM] Krystal Widget Loaded!\" << std::endl;\n    }\n}\n")
+        (widget_dir / "CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.10)\nproject(KrystalWidgetWASM)\nset(CMAKE_CXX_STANDARD 17)\nadd_executable(widget.js main.cpp)\nset_target_properties(widget.js PROPERTIES LINK_FLAGS \"-s EXPORTED_RUNTIME_METHODS=ccall,cwrap -s MODULARIZE=1 -s EXPORT_NAME=createKrystalModule\")\n")
+        (widget_dir / "krystal-wasm-bridge.js").write_text("/**\n * Bridge between KrystalOS Event Bus and WebAssembly Module.\n */\nwindow.onload = async () => {\n  const wasmModule = await createKrystalModule();\n  wasmModule.ccall('krystal_init', 'v', [], []);\n};\n")
+    elif language == "csharp":
+        (widget_dir / f"{name}.csproj").write_text("<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <OutputType>Exe</OutputType>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n")
+        (widget_dir / "Program.cs").write_text("using System;\n\nnamespace KrystalWidget {\n    class Program {\n        static void Main(string[] args) {\n            Console.WriteLine(\"[C#] Krystal Microservice Booted.\");\n        }\n    }\n}\n")
+        (widget_dir / "krystal-boot.json").write_text('{"exec": "dotnet run", "port": 5005}')
+    elif language == "java":
+        (widget_dir / "pom.xml").write_text("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n    <modelVersion>4.0.0</modelVersion>\n    <groupId>com.krystalos</groupId>\n    <artifactId>widget</artifactId>\n    <version>1.0</version>\n</project>\n")
+        (widget_dir / "krystal-boot.json").write_text('{"exec": "mvn clean compile exec:java", "mainClass": "com.krystalos.Main", "port": 8080}')
+    elif language == "python":
+        (ui_dir / "pyscript.html").write_text("<!DOCTYPE html>\n<html>\n<head>\n  <link rel=\"stylesheet\" href=\"https://pyscript.net/latest/pyscript.css\" />\n  <script defer src=\"https://pyscript.net/latest/pyscript.js\"></script>\n</head>\n<body>\n  <py-script>\n    print('[PyScript] Python Krystal loaded inside Browser.')\n  </py-script>\n</body>\n</html>\n")
 
     # 2. krystal.json
     manifest = KrystalWidget(

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Lab | KrystalOS Emulator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --accent: #3b82f6;
+        }
+        body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 300px; background: var(--panel-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .header { padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; }
+        .device-controls { padding: 15px; display: flex; gap: 10px; }
+        .device-controls button { background: var(--border-color); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        .device-controls button:hover { background: var(--accent); }
+        .console { flex: 1; overflow-y: auto; padding: 15px; font-family: monospace; font-size: 13px; background: #000; }
+        .console div { margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 4px; }
+        .log-emit { color: #4ade80; }
+        .log-on { color: #60a5fa; }
+        .main-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px); }
+        
+        .device-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border: 8px solid #334155;
+        }
+        .dim-mobile { width: 375px; height: 667px; }
+        .dim-tablet { width: 768px; height: 1024px; }
+        .dim-desktop { width: 1024px; height: 768px; }
+        iframe { width: 100%; height: 100%; border: none; background: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="header">🧪 Krystal Widget Lab</div>
+        <div class="device-controls">
+            <button onclick="setDim('dim-mobile')">📱 Mobile</button>
+            <button onclick="setDim('dim-tablet')">📟 Tablet</button>
+            <button onclick="setDim('dim-desktop')">💻 Desktop</button>
+        </div>
+        <div class="header" style="border-top: 1px solid var(--border-color);">📡 Event Console</div>
+        <div class="console" id="labConsole"></div>
+    </div>
+    
+    <div class="main-stage">
+        <div class="device-wrapper dim-mobile" id="deviceBox">
+            <!-- Widget content loads here -->
+            <iframe id="widgetFrame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <!-- Inject the Mock core -->
+    <script src="krystal-bridge.js"></script>
+    <script src="mock-mod-api.js"></script>
+    <script src="../shared/profiler.js"></script>
+    <script>
+        function setDim(className) {
+            document.getElementById('deviceBox').className = 'device-wrapper ' + className;
+        }
+
+        // Auto-inject the widget's local ui.html into the iframe once LiveServer is active
+        window.onload = () => {
+            // Check if there is a lab bridge (test:all integration)
+            fetch('../../lab-bridge.json')
+                .then(res => res.json())
+                .then(bridge => {
+                    console.log("[LabBridge] Integration mode active", bridge);
+                    // In real use case, we load the parent widget's ui.html dynamically
+                }).catch(() => {
+                    console.log("[LabBridge] Standalone mode");
+                });
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mod Lab | Krystal Data Dashboard</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: monospace; display: flex; }
+        .panel { padding: 20px; border-right: 1px solid #334155; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        .controls { width: 350px; }
+        .results { flex: 1; background: #000; }
+        h2 { color: #f8fafc; font-size: 16px; margin-top: 0; }
+        .btn { display: block; width: 100%; padding: 10px; margin-bottom: 15px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2563eb; }
+        .btn-danger { background: #ef4444; }
+        input[type="range"] { width: 100%; margin-bottom: 10px; }
+        .json-viewer { white-space: pre-wrap; word-wrap: break-word; color: #4ade80; }
+        .param-row { margin-bottom: 10px; display: flex; gap: 10px; }
+        .param-row input { flex: 1; background: #1e293b; color: white; border: 1px solid #334155; padding: 6px; }
+    </style>
+</head>
+<body>
+    <div class="panel controls">
+        <h2>🛠 Stress Injectors</h2>
+        <label>Latency Delay (ms): <span id="lagVal">0</span></label>
+        <input type="range" id="lagSlider" min="0" max="5000" step="100" value="0" oninput="document.getElementById('lagVal').innerText=this.value">
+        
+        <label><input type="checkbox" id="errorToggle"> Force 500 Throw Error (UI Boundary Test)</label>
+        
+        <hr style="border-color:#334155; margin: 20px 0;">
+        
+        <h2>🔌 Swagger Auto-Routes</h2>
+        <!-- Example mock routes, in real time this script lists your exposed endpoints -->
+        <div class="route-box" style="border:1px solid #334155; padding:10px; margin-bottom: 10px;">
+            <strong style="color: #60a5fa;">GET /api/mod/list</strong>
+            <button class="btn" style="margin-top:10px" onclick="executeCall('GET', '/api/mod/list')">Test GET</button>
+        </div>
+        
+        <div class="route-box" style="border:1px solid #334155; padding:10px; margin-bottom: 10px;">
+            <strong style="color: #4ade80;">POST /api/mod/insert</strong>
+            <div class="param-row" style="margin-top:10px">
+                <input type="text" id="postKey" placeholder='{"name": "test"}'>
+            </div>
+            <button class="btn" onclick="executeCall('POST', '/api/mod/insert')">Test POST</button>
+        </div>
+
+        <button class="btn btn-danger" onclick="KrystalModDB.nuke(); document.getElementById('jsonOut').innerHTML='[Storage Wiped]';">☢ Nuke Mock Database</button>
+    </div>
+
+    <div class="panel results">
+        <h2>📦 Response Visualizer</h2>
+        <div class="json-viewer" id="jsonOut">Waiting for execution...</div>
+    </div>
+
+    <script src="mock-database.js"></script>
+    <script src="../shared/profiler.js"></script>
+    <script>
+        async function executeCall(method, fakeUrl) {
+            const out = document.getElementById('jsonOut');
+            out.innerHTML = `<span style="color:#fde047">Executing via StressTestInjector...</span>`;
+            
+            try {
+                // Simulate going through our latency proxy
+                await window.StressTestInjector.fetchWithStress('data:application/json,{"ping":"ok"}'); // Fake ping to trigger lag/err
+
+                // Simulate the backend Logic calling MockDB
+                let result;
+                if (method === 'GET') {
+                    result = window.KrystalModDB.select("mock_table");
+                } else if (method === 'POST') {
+                    const val = document.getElementById('postKey').value || '{"default_key":1}';
+                    result = window.KrystalModDB.insert("mock_table", JSON.parse(val));
+                }
+                
+                out.innerHTML = JSON.stringify(result, null, 2);
+            } catch (error) {
+                out.innerHTML = `<span style="color:#ef4444">${error.toString()}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

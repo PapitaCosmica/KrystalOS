@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Theme Lab | Visual Regression Sandbox</title>
+    <!-- Basic Core Tokens (Simulating v2.2.0 foundation) -->
+    <style id="krystal-core-tokens">
+        :root {
+            --kos-bg-main: #0f172a;
+            --kos-text-main: #f8fafc;
+            --kos-accent: #3b82f6;
+            --kos-danger: #ef4444;
+        }
+        body { margin: 0; background: var(--kos-bg-main); color: var(--kos-text-main); font-family: ui-sans-serif, system-ui; display: flex; height: 100vh; }
+        .sidebar { width: 320px; background: rgba(0,0,0,0.2); border-right: 1px solid rgba(255,255,255,0.1); padding: 20px; box-sizing: border-box; overflow-y: auto;}
+        .canvas { flex: 1; padding: 40px; overflow-y: auto; }
+        
+        /* Basic dummy components */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; background: var(--kos-accent); color: white; cursor: pointer; font-weight: bold; }
+        .card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;}
+        textarea { width: 100%; height: 150px; background: #000; color: #4ade80; font-family: monospace; border: 1px solid #334155; padding: 10px; margin-bottom: 10px;}
+        
+        .wcag-pass { color: #4ade80; font-weight: bold; }
+        .wcag-fail { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>🎨 Layer Swapper</h3>
+        <p style="font-size: 13px; color: #94a3b8;">Inyecta tu CSS encima del <code style="background:#000;padding:2px">#krystal-root</code> simulado.</p>
+        <textarea id="cssInput">
+/* Try editing the palette! */
+:root {
+  --kos-bg-main: #ffffff;
+  --kos-text-main: #000000;
+  --kos-accent: #111827;
+}
+
+#krystal-root .card {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+}
+        </textarea>
+        <button class="btn" onclick="applyCSS()">Inyectar Capa (Override)</button>
+
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+
+        <h3>👁️ Contrast Checker (WCAG)</h3>
+        <div id="wcagResults" style="font-size: 14px; background: #000; padding: 10px; border-radius: 6px;">
+            Aplica un CSS para evaluar contraste en tiempo real.
+        </div>
+    </div>
+
+    <div class="canvas" id="krystal-root">
+        <h1>Header Principal</h1>
+        <p>Este es un texto estándar para visualizar la legibilidad global de las variables inyectadas.</p>
+        
+        <div class="card">
+            <h3>Componente: Widget Card</h3>
+            <p>El contraste de esta tarjeta cambiará según tus tokens.</p>
+            <button class="btn">Acción Estándar</button>
+            <button class="btn" style="background: var(--kos-danger)">Acción Peligro</button>
+        </div>
+    </div>
+
+    <script src="../shared/profiler.js"></script>
+    <script>
+        // --- Layer Swapper Logic ---
+        function applyCSS() {
+            const cssRaw = document.getElementById('cssInput').value;
+            let styleTag = document.getElementById('injected-layer');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'injected-layer';
+                document.head.appendChild(styleTag);
+            }
+            styleTag.textContent = cssRaw;
+            
+            // Allow DOM to repaint, then measure
+            setTimeout(runWCAGAnalyzer, 100);
+            
+            // Notify profiler for Regex AST check
+            window.KrystalProfilerData = window.KrystalProfilerData || {};
+            window.KrystalProfilerData.latestCSS = cssRaw;
+            if (window.analyzeTheme) window.analyzeTheme();
+        }
+
+        // --- Contrast Checker WCAG Math ---
+        function getRGB(str) {
+            const match = str.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (match) return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+            return [0,0,0]; // fallback
+        }
+
+        function getLuminance(r, g, b) {
+            var a = [r, g, b].map(function (v) {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
+        function runWCAGAnalyzer() {
+            const bodyStyle = window.getComputedStyle(document.body);
+            const bgStr = bodyStyle.backgroundColor;
+            const textStr = bodyStyle.color;
+            
+            const bgRGB = getRGB(bgStr);
+            const textRGB = getRGB(textStr);
+            
+            const lum1 = getLuminance(...bgRGB);
+            const lum2 = getLuminance(...textRGB);
+            
+            const brightest = Math.max(lum1, lum2);
+            const darkest = Math.min(lum1, lum2);
+            const contrast = (brightest + 0.05) / (darkest + 0.05);
+            
+            let status = '';
+            if (contrast >= 7) status = '<span class="wcag-pass">✅ AAA (Excelente)</span>';
+            else if (contrast >= 4.5) status = '<span class="wcag-pass">✅ AA (Bueno)</span>';
+            else status = '<span class="wcag-fail">❌ FAIL (Ilegible)</span>';
+
+            document.getElementById('wcagResults').innerHTML = `
+                Ratio de Contraste: <strong>${contrast.toFixed(2)}:1</strong><br>
+                Nivel de Accesibilidad: ${status}
+            `;
+        }
+
+        // Run once natively
+        runWCAGAnalyzer();
+    </script>
+</body>
+</html>

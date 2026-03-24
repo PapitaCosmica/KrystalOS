@@ -28,11 +28,19 @@ VALID_TYPES = [
 @theme_app.command("theme")
 def make_theme(
     name: str = typer.Argument(None, help="Name of the theme"),
-    type: str = typer.Option(None, "--type", "-t", help="Theme category (e.g. CORE_LAYOUT, COLOR_PALETTE)")
+    type: str = typer.Option(None, "--type", "-t", help="Theme category (e.g. CORE_LAYOUT, COLOR_PALETTE)"),
+    test: bool = typer.Option(False, "--test", help="Generates an isolated Visual Compositor Lab for this Theme")
 ):
     """
     Scaffold a new modular theme for the KrystalOS Compositor.
     """
+    if test:
+        from cli.lab_engine import deploy_lab
+        if not name:
+            name = typer.prompt("¿Cómo se llama tu Theme Lab?", default="my-theme-lab")
+        deploy_lab("theme", name.replace(" ", "-").lower())
+        return
+
     console.print("\n[bold magenta]🎨 KrystalOS Theme Scaffolder[/]")
     project_root = ensure_krystal_project()
 
@@ -62,6 +70,17 @@ def make_theme(
 
     theme_dir.mkdir(parents=True)
     
+    # Framework Prompt
+    framework_options = ["Puro CSS", "Tailwind CSS", "Bootstrap (SCSS)"]
+    console.print("\n[yellow]¿Qué framework CSS vas a utilizar?[/]")
+    for idx, fOpt in enumerate(framework_options):
+        console.print(f"  [cyan]{idx+1}. {fOpt}[/]")
+    f_choice = Prompt.ask("[yellow]Elige (1-3)[/]", default="1")
+    try:
+        framework = framework_options[int(f_choice) - 1]
+    except:
+        framework = "Puro CSS"
+
     # 1. Manifest
     priority = 10
     defines_structure = False
@@ -79,6 +98,7 @@ def make_theme(
         "name": name,
         "version": "1.0.0",
         "theme_type": type,
+        "framework": framework,
         "priority_level": priority,
         "defines_structure": defines_structure
     }
@@ -86,36 +106,72 @@ def make_theme(
     with open(theme_dir / "composite.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=4)
 
-    # 2. Boilerplate CSS
-    css_content = f"/* KrystalOS Theme: {name} | Type: {type} */\n\n"
-    
-    if type == "COLOR_PALETTE":
-        css_content += ":root {\n    --kos-primary: #8b5cf6;\n    --kos-bg-main: #0f172a;\n    --kos-text-main: #f8fafc;\n}\n"
-    elif type == "CORE_LAYOUT":
-        css_content += """body {
-    display: grid;
-    /* Move taskbar to the left instead of bottom */
-    grid-template-areas: 
-        "krystal-taskbar krystal-desktop"
-        "krystal-taskbar krystal-notifications";
-    grid-template-columns: 80px 1fr;
-    grid-template-rows: 1fr auto;
-}
-.krystal-taskbar { flex-direction: column; }
-"""
-    elif type == "WIDGET_SKIN":
-        css_content += """.kos-widget-frame {
-    border-radius: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-"""
-    else:
-        css_content += "/* Escribe tus reglas CSS aquí... */\n"
+    # 2. Framework Scaffolding
+    if framework == "Tailwind CSS":
+        # Tailwind Boilerplate
+        tw_config = """/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["../../**/*.{html,js}"],
+  theme: {
+    extend: {
+      colors: {
+        kosBg: 'var(--kos-bg-main)',
+        kosText: 'var(--kos-text-main)',
+        kosAccent: 'var(--kos-accent)'
+      }
+    },
+  },
+  plugins: [],
+}"""
+        with open(theme_dir / "tailwind.config.js", "w", encoding="utf-8") as f:
+            f.write(tw_config)
+            
+        with open(theme_dir / "style.css", "w", encoding="utf-8") as f:
+            f.write("@tailwind base;\n@tailwind components;\n@tailwind utilities;\n")
+            
+        with open(theme_dir / "package.json", "w", encoding="utf-8") as f:
+            pkg = {
+                "name": clean_name,
+                "scripts": { "build": "npx tailwindcss -i ./style.css -o ./dist.css --minify" },
+                "devDependencies": { "tailwindcss": "^3.0.0" }
+            }
+            json.dump(pkg, f, indent=4)
+            
+    elif framework == "Bootstrap (SCSS)":
+        # Bootstrap Boilerplate
+        scss_content = f"""/* KrystalOS Bootstrap Override */
+$primary: var(--kos-accent);
+$body-bg: var(--kos-bg-main);
+$body-color: var(--kos-text-main);
 
-    with open(theme_dir / "style.css", "w", encoding="utf-8") as f:
-        f.write(css_content)
+@import "bootstrap";
+"""
+        with open(theme_dir / "style.scss", "w", encoding="utf-8") as f:
+            f.write(scss_content)
+        
+        with open(theme_dir / "package.json", "w", encoding="utf-8") as f:
+            pkg = {
+                "name": clean_name,
+                "scripts": { "build": "npx sass style.scss dist.css --no-source-map" },
+                "devDependencies": { "sass": "^1.0.0", "bootstrap": "^5.0.0" }
+            }
+            json.dump(pkg, f, indent=4)
+
+    else:
+        # Puro CSS Boilerplate
+        css_content = f"/* KrystalOS Theme: {name} | Type: {type} */\n\n"
+        if type == "COLOR_PALETTE":
+            css_content += ":root {\n    --kos-primary: #8b5cf6;\n    --kos-bg-main: #0f172a;\n    --kos-text-main: #f8fafc;\n}\n"
+        elif type == "CORE_LAYOUT":
+            css_content += "body {\n    display: grid;\n    grid-template-areas: \n        \"krystal-taskbar krystal-desktop\"\n        \"krystal-taskbar krystal-notifications\";\n    grid-template-columns: 80px 1fr;\n    grid-template-rows: 1fr auto;\n}\n.krystal-taskbar { flex-direction: column; }\n"
+        elif type == "WIDGET_SKIN":
+            css_content += ".kos-widget-frame {\n    border-radius: 24px;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.3);\n    border: 1px solid rgba(255, 255, 255, 0.1);\n}\n"
+        else:
+            css_content += "/* Escribe tus reglas CSS aquí... */\n"
+
+        with open(theme_dir / "style.css", "w", encoding="utf-8") as f:
+            f.write(css_content)
 
     console.print(f"\n[green]✓ Tema Modular '{name}' andamiado exitosamente.[/]")
     console.print(f"Directorio: [cyan]{theme_dir}[/]")
-    console.print(f"Capa Inyectada: [yellow]{type}[/] (Prioridad: {priority})\n")
+    console.print(f"Framework: [magenta]{framework}[/]")

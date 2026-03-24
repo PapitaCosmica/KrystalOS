@@ -53,14 +53,30 @@ def cmd_init(
 # ---------------------------------------------------------------------------
 
 @app.command("make:widget")
-def cmd_make_widget() -> None:
+def cmd_make_widget(
+    test: bool = typer.Option(False, "--test", help="Generates an isolated UI/Events Lab for this Widget")
+) -> None:
     """
     🧩  Interactive wizard to generate a new standalone widget.
     
     Prompts for architecture (MVC/Simple/AI), language, and generates 
     the autonomous standalone environment via The Factory.
+    If --test is passed, creates a Krystal Lab.
     """
+    if test:
+        from cli.lab_engine import deploy_lab
+        # Assuming widget name is prompted inside scaffold, but for --test we might want to bypass or ask
+        name = typer.prompt("¿Cómo se llama tu Widget Lab?", default="my-widget-lab")
+        deploy_lab("widget", name.replace(" ", "-").lower())
+        return
+        
     scaffolding_wizard()
+
+# ---------------------------------------------------------------------------
+# krystal make:mod
+# ---------------------------------------------------------------------------
+from cli.commands.mod_scaffolder import make_mod
+app.command("make:mod")(make_mod)
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +98,13 @@ def cmd_doctor(
     docker. Suggests Lite Mode if available RAM is below 4 GB.
     """
     run_doctor(bundle=bundle)
+
+
+# ---------------------------------------------------------------------------
+# krystal test:all
+# ---------------------------------------------------------------------------
+from cli.commands.test_all import run_test_all
+app.command("test:all")(run_test_all)
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +165,19 @@ app.add_typer(bundle_app, name="bundle")
 # krystal deploy (Command Group)
 # ---------------------------------------------------------------------------
 app.add_typer(deploy_app, name="deploy")
+
+# ---------------------------------------------------------------------------
+# krystal post <target>
+# ---------------------------------------------------------------------------
+from cli.commands.post import run_post
+
+@app.command("post")
+def cmd_post(target: str = typer.Argument(..., help="Ruta del Widget, Mod o Theme a empaquetar en .kzip")):
+    """
+    📦  Package and publish a specific module to the KrystalOS Registry (.kzip)
+    """
+    run_post(target)
+
 
 # ---------------------------------------------------------------------------
 # krystal make (Command Group)
