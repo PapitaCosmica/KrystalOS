@@ -43,6 +43,9 @@ Interactive wizard to scaffold a Modular UI Theme layer (`CORE_LAYOUT`, `WIDGET_
 ### `krystal remove <name>`
 *v2.2.5 Feature:* Safely uninstalls a Mod. Detects orphan widgets, shows a dependency warning table, runs `SnapshotEngine` to create a `.kss` backup, then removes files and DB entries. Restoring: `krystal restore backups/archive/<file>.kss`.
 
+### `krystal bind <source> <target>`
+*v2.2.6 Feature:* Validates the Krystal Dictionary (`kos.*` schema namespace) between two components and writes a routing pipeline to `core/config/pipelines.json`. Rejects mismatched schemas with a Translator Mod suggestion.
+
 ### `krystal serve [COMMAND] [OPTIONS]`
 The core gateway orchestrator and process manager.
 - `krystal serve start [--port 8000]`: Boots up Uvicorn, launches the widget auto-discovery engine, and hosts the dashboard. Tracks PIDs.
@@ -118,6 +121,7 @@ Every widget must contain a `krystal.json` at its root:
 | Phase 7.3 | Environment Targeting — LITE/PRO Profiles, Dependency Registry & Hibernation ✅ |
 | Phase 7.4 | Fluid UI & Off-Main-Thread — GridManager, ThreadBridge (Web Workers) & HMR ✅ |
 | Phase 7.5 | Snapshot Archiver & Interactive Lite-Guardian — Safe Remove & Smart Suspend ✅ |
+| Phase 7.6 | Data Mesh, IPC Router & Secure Binding — kos.* Standard, Hop-Limit & ErrorBoundary ✅ |
 
 ---
 **Desarrollado con ❤ por PapitaCosmica**

@@ -209,6 +209,25 @@ def cmd_remove(
 
 
 # ---------------------------------------------------------------------------
+# krystal bind <source> <target>
+# ---------------------------------------------------------------------------
+from cli.commands.binder import run_bind
+
+@app.command("bind")
+def cmd_bind(
+    source: str = typer.Argument(..., help="Origen del dato (Widget o Mod)."),
+    target: str = typer.Argument(..., help="Destino del dato (Widget o Mod)."),
+    output: str = typer.Option(None, "--output", "-o", help="Key de output del origen."),
+    input_key: str = typer.Option(None, "--input", "-i", help="Key de input del destino."),
+) -> None:
+    """
+    🔗  Validate & bind two components via the Krystal Dictionary (Data Mesh).
+    Writes the pipeline rule to core/config/pipelines.json.
+    """
+    run_bind(source, target, output_key=output, input_key=input_key)
+
+
+# ---------------------------------------------------------------------------
 # krystal make (Command Group)
 # ---------------------------------------------------------------------------
 from cli.commands.theme_scaffolder import theme_app
