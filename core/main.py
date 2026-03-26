@@ -77,6 +77,15 @@ _SYS_STATIC_DIR = Path(__file__).parent.parent / "static"
 app.mount("/sys-static", StaticFiles(directory=str(_SYS_STATIC_DIR)), name="sys_static")
 app.mount("/static", StaticFiles(directory=str(_PROJECT_STATIC_DIR)), name="user_static")
 
+# PATCH v2.2.6.5: Serve widget assets so relative paths (Worker, img, css) resolve inside the OS
+_WIDGETS_DIR = PROJECT_ROOT / "widgets"
+_WIDGETS_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    app.mount("/widgets", StaticFiles(directory=str(_WIDGETS_DIR)), name="widgets_assets")
+except RuntimeError:
+    # widgets/ is empty or doesn't exist yet — fail gracefully
+    pass
+
 @app.on_event("startup")
 async def on_startup() -> None:
     """Startup routine: Discovery + route mounting + zombie sweeper."""

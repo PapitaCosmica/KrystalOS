@@ -76,15 +76,13 @@ _STARTERS: dict[str, tuple[str, str]] = {
 
 
 def _ui_html(widget_name: str, theme_color: str, css_framework: str = "No (Default)") -> str:
-    """Generate a base ui.html for the widget."""
+    """Generate a Grid-compliant base ui.html for the widget."""
     
     css_injection = ""
     if css_framework == "Tailwind":
-        css_injection = '<script src="https://cdn.tailwindcss.com"></script>\n          <style>\n            :root { --accent: {theme_color}; }\n          </style>'
+        css_injection = '<script src="https://cdn.tailwindcss.com"></script>'
     elif css_framework == "Bootstrap":
-        css_injection = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n          <style>\n            :root { --accent: {theme_color}; }\n          </style>'
-    else:
-        css_injection = '<style>\n            :root { --accent: {theme_color}; --kos-accent: {theme_color}; }\n          </style>'
+        css_injection = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">'
 
     return dedent(f"""\
         <!DOCTYPE html>
@@ -95,47 +93,72 @@ def _ui_html(widget_name: str, theme_color: str, css_framework: str = "No (Defau
           <title>{widget_name} — KrystalOS Widget</title>
           {css_injection}
           <style>
-            body {{
-              background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-family: 'Inter', sans-serif;
+            /* KrystalOS Grid Compliance — No fixed w/h. Fill the bento cell. */
+            html, body {{
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+              background: transparent;
+              font-family: 'Inter', system-ui, sans-serif;
             }}
-            .glass {{
-              background: rgba(255, 255, 255, 0.08);
+            :root {{
+              --accent: {theme_color};
+              --kos-accent: {theme_color};
+            }}
+            #widget-root {{
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              padding: 1rem;
+              gap: 0.75rem;
+              color: var(--krystal-text, rgba(255,255,255,0.85));
+            }}
+            .kos-glass {{
+              background: rgba(255, 255, 255, 0.06);
               backdrop-filter: blur(16px);
               -webkit-backdrop-filter: blur(16px);
-              border: 1px solid rgba(255, 255, 255, 0.15);
-              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+              border: 1px solid rgba(255, 255, 255, 0.12);
+              border-radius: 0.75rem;
+              padding: 0.75rem;
             }}
+            button.kos-btn {{
+              padding: 0.5rem 1rem;
+              border-radius: 0.5rem;
+              border: none;
+              cursor: pointer;
+              font-weight: 600;
+              background: var(--accent);
+              color: #fff;
+              transition: opacity 0.2s ease, transform 0.1s ease;
+            }}
+            button.kos-btn:hover {{ opacity: 0.88; }}
+            button.kos-btn:active {{ transform: scale(0.97); }}
           </style>
         </head>
-        <body class="text-white">
-          <!-- KrystalOS Bento Widget: {widget_name} -->
-          <div class="glass rounded-2xl p-6 w-72 flex flex-col gap-4">
-            <div class="flex items-center gap-3">
-              <span class="text-3xl">🔷</span>
+        <body>
+          <div id="widget-root">
+            <!-- KrystalOS Bento Widget: {widget_name} -->
+            <div class="kos-glass" style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="font-size:1.5rem">🔷</span>
               <div>
-                <h1 class="text-lg font-bold tracking-tight">{widget_name}</h1>
-                <p class="text-xs text-white/50">KrystalOS Widget</p>
+                <div style="font-weight:700; font-size:0.95rem;">{widget_name}</div>
+                <div style="font-size:0.7rem; opacity:0.5;">KrystalOS Widget</div>
               </div>
             </div>
-            <div class="rounded-xl p-4 text-sm text-white/70"
-                 style="background: rgba(255,255,255,0.05);">
+            <div class="kos-glass" style="flex:1; font-size:0.8rem; opacity:0.6;">
               Widget content renders here.
             </div>
-            <button
-              class="w-full py-2 rounded-lg text-sm font-semibold transition-all
-                     hover:opacity-90 active:scale-95"
-              style="background: {theme_color};">
-              Launch Widget
-            </button>
+            <button class="kos-btn">Launch</button>
           </div>
           <script>
-            // Phase 3 hook — subscribe to KrystalOS Event Bus
-            // window.__krystal?.subscribe("theme:change", (payload) => {{ ... }});
+            // Krystal Event Bus hook
+            // const bridge = window.KrystalInitBridge && window.KrystalInitBridge('{widget_name}');
+            // bridge?.connect();
+            // bridge?.on('THEME_CHANGED', (theme) => {{ console.log(theme); }});
           </script>
         </body>
         </html>
@@ -245,39 +268,74 @@ def make_widget(name: str | None = None, test: bool = False) -> None:
 
     widget_dir.mkdir(parents=True)
 
-    # krystal.json
-    # Modify manifest slightly to store architecture if PHP
+    # krystal.json — escribir lenguaje dinámicamente, nunca hardcodear
     json_data = manifest.to_krystal_json()
+    json_data["language"] = language  # Siempre explícito
     if language == "php":
         json_data["architecture"] = php_arch
-        
+
     (widget_dir / "krystal.json").write_text(
         json.dumps(json_data, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
-    # Language starter file / Architecture routing
+    # ── Language Routing ─────────────────────────────────────────────────────
     filename, template = _STARTERS.get(language, ("index.txt", "# {name}"))
-    
+
     if language == "php" and php_arch == "MVC":
-        # Generate MVC Scaffold
+        # PHP MVC: /controllers /models /views
         (widget_dir / "controllers").mkdir()
         (widget_dir / "models").mkdir()
         (widget_dir / "views").mkdir()
-        
-        (widget_dir / "controllers" / "WidgetController.php").write_text("<?php\n// Controller Logic\n", encoding="utf-8")
-        (widget_dir / "models" / "DataModel.php").write_text("<?php\n// Data Models\n", encoding="utf-8")
-        (widget_dir / "views" / filename).write_text(template.format(name=name, lang_version=lang_version), encoding="utf-8")
-        
-        filename = "views/" + filename # For the summary
+        (widget_dir / "controllers" / "WidgetController.php").write_text(
+            "<?php\n// Controller Logic\n", encoding="utf-8"
+        )
+        (widget_dir / "models" / "DataModel.php").write_text(
+            "<?php\n// Data Models\n", encoding="utf-8"
+        )
+        (widget_dir / "views" / filename).write_text(
+            template.format(name=name, lang_version=lang_version), encoding="utf-8"
+        )
+        filename = "views/" + filename  # For the summary
+
+    elif language in ("javascript", "js", "node", "typescript"):
+        # JS/TS/Node: /logic (worker/main) + /ui (components)
+        (widget_dir / "logic").mkdir()
+        (widget_dir / "ui").mkdir()
+        # Entry point in /logic
+        (widget_dir / "logic" / filename).write_text(
+            template.format(name=name, lang_version=lang_version), encoding="utf-8"
+        )
+        # Web Worker stub — critical for CriptoStreamer-style widgets
+        (widget_dir / "logic" / "worker.js").write_text(
+            dedent("""\
+                // KrystalOS Web Worker — {name}
+                // Runs in a separate thread to keep the UI responsive.
+                // Communicate with the main thread using postMessage.
+
+                self.onmessage = (event) => {{
+                  const {{ action, payload }} = event.data;
+                  // TODO: implement your logic here
+                  self.postMessage({{ event: 'ready', data: null }});
+                }};
+
+                // Example: Keep-alive ping
+                setInterval(() => {{
+                  self.postMessage({{ event: 'ping', data: {{ ts: Date.now() }} }});
+                }}, 5000);
+            """).format(name=name),
+            encoding="utf-8",
+        )
+        filename = "logic/" + filename  # For the summary
+
     else:
-        # Pure PHP or other languages (Flat)
+        # Python, PHP Pure, any other flat layout
         (widget_dir / filename).write_text(
             template.format(name=name, lang_version=lang_version),
             encoding="utf-8",
         )
 
-    # ui.html (Injected with CSS Framework options)
+    # ui.html — siempre se genera, respeta el Compositor Grid
     (widget_dir / "ui.html").write_text(
         _ui_html(name, theme_color, css_framework),
         encoding="utf-8",

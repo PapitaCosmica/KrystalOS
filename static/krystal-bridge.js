@@ -99,3 +99,35 @@ class KrystalBridge {
 window.KrystalInitBridge = (widgetName) => {
     return new KrystalBridge(widgetName);
 };
+
+/**
+ * Krystal — Public API Namespace (v2.2.6.5)
+ * Exposes helpers to widget developers for safe path resolution and bridge init.
+ */
+window.Krystal = {
+    /**
+     * Resolve a relative widget asset path to a safe absolute URL served by KrystalOS.
+     * Use this to instantiate Web Workers or load assets without 404 errors.
+     *
+     * @param {string} widgetName - The widget's folder name (e.g. 'criptostreamer')
+     * @param {string} relativePath - The path relative to the widget root (e.g. 'logic/worker.js')
+     * @returns {string} Full URL safe to use in `new Worker(...)`, `fetch(...)`, etc.
+     *
+     * @example
+     *   const worker = new Worker(Krystal.resolvePath('criptostreamer', 'logic/worker.js'));
+     */
+    resolvePath(widgetName, relativePath) {
+        return `/widgets/${widgetName}/${relativePath}`;
+    },
+
+    /**
+     * Convenience wrapper: create a KrystalBridge for a given widget and auto-connect.
+     * @param {string} widgetName
+     * @returns {KrystalBridge}
+     */
+    initBridge(widgetName) {
+        const bridge = new KrystalBridge(widgetName);
+        bridge.connect();
+        return bridge;
+    },
+};
