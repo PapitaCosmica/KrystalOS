@@ -16,6 +16,7 @@ from cli.commands.install import install_widget, update_widget
 from cli.commands.serve import serve_app
 from cli.bundler import bundle_app
 from cli.deployer import deploy_app
+from cli.commands.update import run_update
 
 app = typer.Typer(
     name="krystal",
@@ -242,3 +243,13 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+# ---------------------------------------------------------------------------
+# krystal update
+# ---------------------------------------------------------------------------
+
+@app.command("update")
+def cmd_update() -> None:
+    """
+    🚀  Update the KrystalOS core framework.
+    """
+    run_update()
